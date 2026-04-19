@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://csid8mwtghkd5"]
 
-[ext_resource type="Script" path="res://Scripts/LevelManager.gd" id="1"]
+[ext_resource type="Script" uid="uid://cpaaiifmq0gjy" path="res://Scripts/LevelManager.gd" id="1"]
 
-[node name="LevelManager" type="Control"]
+[node name="LevelManager" type="Control" unique_id=6370059]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=76570809]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,33 +19,33 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Title" type="Label" parent="VBoxContainer"]
+[node name="Title" type="Label" parent="VBoxContainer" unique_id=913259559]
 layout_mode = 2
 text = "UGC 关卡合集"
 horizontal_alignment = 1
 
-[node name="InfoLabel" type="Label" parent="VBoxContainer"]
+[node name="InfoLabel" type="Label" parent="VBoxContainer" unique_id=1926818799]
 layout_mode = 2
 text = "选择一个关卡开始游戏"
 horizontal_alignment = 1
 
-[node name="LevelList" type="ItemList" parent="VBoxContainer"]
+[node name="LevelList" type="ItemList" parent="VBoxContainer" unique_id=1602830282]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="ButtonContainer" type="HBoxContainer" parent="VBoxContainer"]
+[node name="ButtonContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=1917910607]
 layout_mode = 2
 
-[node name="PlayButton" type="Button" parent="VBoxContainer/ButtonContainer"]
+[node name="PlayButton" type="Button" parent="VBoxContainer/ButtonContainer" unique_id=699584567]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "开始游戏"
 
-[node name="LoadPckButton" type="Button" parent="VBoxContainer/ButtonContainer"]
+[node name="LoadPckButton" type="Button" parent="VBoxContainer/ButtonContainer" unique_id=356505856]
 layout_mode = 2
 text = "加载PCK"
 
-[node name="RefreshButton" type="Button" parent="VBoxContainer/ButtonContainer"]
+[node name="RefreshButton" type="Button" parent="VBoxContainer/ButtonContainer" unique_id=1487053161]
 layout_mode = 2
 text = "刷新列表"
 

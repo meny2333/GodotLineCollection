@@ -14,6 +14,7 @@ const PCK_DIR := "res://pck_levels"
 
 func _ready() -> void:
 	_scan_levels()
+	_try_load_pck_level_data()
 	_populate_list()
 	play_button.disabled = true
 	load_pck_button.disabled = true
@@ -72,18 +73,73 @@ func _scan_pck_directory(dir_path: String) -> void:
 	while name != "":
 		if name.ends_with(".pck"):
 			var level_name: String = name.get_basename()
+			var pck_path: String = dir_path.path_join(name)
+			var level_paths := _find_level_paths_in_pck(pck_path)
 			if not levels.has(level_name):
 				levels[level_name] = {
-					"tres": "",
-					"scene": "",
+					"tres": level_paths.get("tres", ""),
+					"scene": level_paths.get("scene", ""),
 					"data": null,
 					"source": "PCK",
-					"pck": dir_path.path_join(name)
+					"pck": pck_path
 				}
 			else:
-				levels[level_name]["pck"] = dir_path.path_join(name)
+				levels[level_name]["pck"] = pck_path
+				if levels[level_name]["tres"].is_empty() and level_paths.has("tres"):
+					levels[level_name]["tres"] = level_paths["tres"]
+				if levels[level_name]["scene"].is_empty() and level_paths.has("scene"):
+					levels[level_name]["scene"] = level_paths["scene"]
 		name = dir.get_next()
 	dir.list_dir_end()
+
+func _find_level_paths_in_pck(pck_path: String) -> Dictionary:
+	var pck_dir_script := load("res://addons/PCKManager/PCKDirAccess.gd")
+	if pck_dir_script == null:
+		return {}
+	var pck_dir: RefCounted = pck_dir_script.new()
+	pck_dir.open(ProjectSettings.globalize_path(pck_path))
+	var paths: Array = pck_dir.get_paths()
+	pck_dir.close()
+	
+	var scene_dirs: Dictionary = {}
+	for p in paths:
+		var p_str: String = str(p).trim_suffix(".remap")
+		if not p_str.contains("[Scenes]/"):
+			continue
+		var scenes_idx := p_str.find("[Scenes]/")
+		var after := p_str.substr(scenes_idx + "[Scenes]/".length())
+		var parts := after.split("/")
+		if parts.size() < 2:
+			continue
+		var dir_name: String = parts[0]
+		var file_name: String = parts[1]
+		if not scene_dirs.has(dir_name):
+			scene_dirs[dir_name] = {"has_tscn": false, "has_tres": false, "tscn_path": "", "tres_path": ""}
+		if file_name.ends_with(".tscn"):
+			scene_dirs[dir_name]["has_tscn"] = true
+			scene_dirs[dir_name]["tscn_path"] = "res://" + p_str
+		elif file_name.ends_with(".tres"):
+			scene_dirs[dir_name]["has_tres"] = true
+			scene_dirs[dir_name]["tres_path"] = "res://" + p_str
+	
+	for dir_name in scene_dirs:
+		var info: Dictionary = scene_dirs[dir_name]
+		if info["has_tscn"] and info["has_tres"]:
+			return {"name": dir_name, "scene": info["tscn_path"], "tres": info["tres_path"]}
+	return {}
+
+func _try_load_pck_level_data() -> void:
+	for level_name in levels:
+		var info = levels[level_name]
+		if info["source"] != "PCK" or info["data"] != null:
+			continue
+		var tres_path: String = info["tres"]
+		if tres_path.is_empty():
+			continue
+		if ResourceLoader.exists(tres_path):
+			var res := load(tres_path)
+			if res is LevelData:
+				info["data"] = res
 
 func _populate_list() -> void:
 	level_list.clear()
@@ -163,9 +219,17 @@ func _load_pck(pck_path: String, level_name: String) -> void:
 		load_pck_button.text = "已加载"
 		load_pck_button.disabled = true
 		
-		var scene_path := _find_tscn("levels/" + level_name)
-		if not scene_path.is_empty() and levels.has(level_name):
-			levels[level_name]["scene"] = scene_path
+		if levels.has(level_name):
+			var tres_path: String = levels[level_name]["tres"]
+			if not tres_path.is_empty() and ResourceLoader.exists(tres_path):
+				var res := load(tres_path)
+				if res is LevelData:
+					levels[level_name]["data"] = res
+			var scene_path: String = levels[level_name]["scene"]
+			if scene_path.is_empty():
+				scene_path = _find_tscn("levels/" + level_name)
+			if not scene_path.is_empty():
+				levels[level_name]["scene"] = scene_path
 		
 		info_label.text = "PCK加载成功: " + level_name
 		_populate_list()
@@ -174,6 +238,7 @@ func _load_pck(pck_path: String, level_name: String) -> void:
 
 func _on_refresh_button_pressed() -> void:
 	_scan_levels()
+	_try_load_pck_level_data()
 	_populate_list()
 	selected_level = ""
 	play_button.disabled = true

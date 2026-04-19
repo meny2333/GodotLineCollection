@@ -3,328 +3,295 @@ extends EditorPlugin
 
 var import_button: Button
 var import_dialog: ConfirmationDialog
-var level_list: ItemList
-var source_path_edit: LineEdit
-var pack_pck_check: CheckBox
+var pck_list: ItemList
+var select_button: Button
+var verify_button: Button
+var file_dialog: FileDialog
+var overwrite_dialog: ConfirmationDialog
 
-const LEVELS_DIR := "res://levels"
+var pck_entries: Array[Dictionary] = []
+
 const PCK_OUTPUT_DIR := "res://pck_levels"
+
+enum VerifyStatus {
+	PENDING,
+	PASSED,
+	FAILED,
+	NO_LEVEL,
+}
 
 func _enter_tree() -> void:
 	import_button = Button.new()
 	import_button.text = "UGC导入"
 	import_button.pressed.connect(_on_import_pressed)
 	add_control_to_container(CONTAINER_TOOLBAR, import_button)
-	
+
 	import_dialog = ConfirmationDialog.new()
-	import_dialog.title = "导入关卡"
-	import_dialog.size = Vector2i(600, 520)
-	
+	import_dialog.title = "导入PCK关卡"
+	import_dialog.size = Vector2i(600, 480)
+	import_dialog.ok_button_text = "导入"
+	import_dialog.confirmed.connect(_on_import_confirmed)
+
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	
-	var header_label := Label.new()
-	header_label.text = "选择要导入的关卡（扫描 LevelData .tres）:"
-	vbox.add_child(header_label)
-	
-	level_list = ItemList.new()
-	level_list.custom_minimum_size = Vector2(0, 300)
-	level_list.select_mode = 3
-	vbox.add_child(level_list)
-	
-	var path_hbox := HBoxContainer.new()
-	path_hbox.add_child(Label.new())
-	path_hbox.get_child(0).text = "关卡目录:"
-	
-	source_path_edit = LineEdit.new()
-	source_path_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	source_path_edit.text = ProjectSettings.globalize_path(LEVELS_DIR)
-	path_hbox.add_child(source_path_edit)
-	
-	var browse_button := Button.new()
-	browse_button.text = "浏览"
-	browse_button.pressed.connect(_on_browse_pressed)
-	path_hbox.add_child(browse_button)
-	
-	var refresh_button := Button.new()
-	refresh_button.text = "刷新"
-	refresh_button.pressed.connect(_refresh_level_list)
-	path_hbox.add_child(refresh_button)
-	
-	vbox.add_child(path_hbox)
-	
-	pack_pck_check = CheckBox.new()
-	pack_pck_check.text = "同时打包为 .pck 文件"
-	vbox.add_child(pack_pck_check)
-	
+
+	var header := Label.new()
+	header.text = "选择 .pck 文件进行验证和导入："
+	vbox.add_child(header)
+
+	pck_list = ItemList.new()
+	pck_list.custom_minimum_size = Vector2(0, 300)
+	pck_list.select_mode = ItemList.SELECT_MULTI
+	vbox.add_child(pck_list)
+
+	var btn_hbox := HBoxContainer.new()
+
+	select_button = Button.new()
+	select_button.text = "选择PCK"
+	select_button.pressed.connect(_on_select_pressed)
+	btn_hbox.add_child(select_button)
+
+	verify_button = Button.new()
+	verify_button.text = "验证选中"
+	verify_button.pressed.connect(_on_verify_pressed)
+	btn_hbox.add_child(verify_button)
+
+	var remove_button := Button.new()
+	remove_button.text = "移除选中"
+	remove_button.pressed.connect(_on_remove_pressed)
+	btn_hbox.add_child(remove_button)
+
+	vbox.add_child(btn_hbox)
+
+	var warn_label := Label.new()
+	warn_label.text = "注意：仅验证PCK格式和内容，运行时由PCKLoader自动加载"
+	warn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	vbox.add_child(warn_label)
+
 	import_dialog.add_child(vbox)
-	import_dialog.confirmed.connect(_on_import_confirmed)
 	add_child(import_dialog)
+
+	file_dialog = FileDialog.new()
+	file_dialog.title = "选择PCK文件"
+	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = PackedStringArray(["*.pck ; PCK文件"])
+	file_dialog.files_selected.connect(_on_files_selected)
+	file_dialog.close_requested.connect(func(): file_dialog.hide())
+	add_child(file_dialog)
+
+	overwrite_dialog = ConfirmationDialog.new()
+	overwrite_dialog.title = "覆盖确认"
+	overwrite_dialog.ok_button_text = "覆盖"
+	overwrite_dialog.cancel_button_text = "跳过"
+	add_child(overwrite_dialog)
 
 func _exit_tree() -> void:
 	remove_control_from_container(CONTAINER_TOOLBAR, import_button)
 	import_button.queue_free()
-	import_dialog.queue_free()
+	file_dialog.queue_free()
+	overwrite_dialog.queue_free()
 
 func _on_import_pressed() -> void:
-	_refresh_level_list()
+	_refresh_list()
 	import_dialog.popup_centered()
 
-func _refresh_level_list() -> void:
-	level_list.clear()
-	_scan_for_level_data(source_path_edit.text)
+func _refresh_list() -> void:
+	pck_list.clear()
+	for i in pck_entries.size():
+		var entry: Dictionary = pck_entries[i]
+		pck_list.add_item(_format_entry(entry))
 
-func _scan_for_level_data(base_dir: String) -> void:
-	var dir := DirAccess.open(base_dir)
-	if dir == null:
+func _format_entry(entry: Dictionary) -> String:
+	var name: String = entry.get("file", "")
+	var status: int = entry.get("status", VerifyStatus.PENDING)
+	var status_text: String = ""
+	match status:
+		VerifyStatus.PENDING: status_text = "待验证"
+		VerifyStatus.PASSED: status_text = "验证通过"
+		VerifyStatus.FAILED: status_text = "验证失败"
+		VerifyStatus.NO_LEVEL: status_text = "无关卡内容"
+	var level_info: Dictionary = entry.get("level_info", {})
+	var detail: String = ""
+	if not level_info.is_empty():
+		var lvl_name: String = level_info.get("name", "")
+		if lvl_name != "":
+			detail = " - " + lvl_name
+		else:
+			detail = " - LevelData"
+	return "%s [%s]%s" % [name.get_file(), status_text, detail]
+
+func _on_select_pressed() -> void:
+	file_dialog.popup_centered(Vector2i(800, 600))
+
+func _on_files_selected(paths: PackedStringArray) -> void:
+	for path in paths:
+		var already := false
+		for entry in pck_entries:
+			if entry["file"] == path:
+				already = true
+				break
+		if not already:
+			pck_entries.append({
+				"file": path,
+				"status": VerifyStatus.PENDING,
+			})
+	_refresh_list()
+
+func _on_remove_pressed() -> void:
+	var selected := pck_list.get_selected_items()
+	if selected.is_empty():
 		return
-	
-	dir.list_dir_begin()
-	var name := dir.get_next()
-	while name != "":
-		if dir.current_is_dir() and not name.begins_with("."):
-			_scan_for_level_data(base_dir.path_join(name))
-		elif name.ends_with(".tres"):
-			var res_path := base_dir.path_join(name)
-			var res := load(res_path)
-			if res is LevelData:
-				var dir_name: String = base_dir.get_file()
-				var display: String = dir_name + "/" + name
-				level_list.add_item(display)
-				level_list.set_item_metadata(level_list.item_count - 1, {
-					"dir": base_dir,
-					"tres": res_path,
-					"name": name.get_basename()
-				})
-		name = dir.get_next()
-	dir.list_dir_end()
+	var to_remove: Array[int] = []
+	for idx in selected:
+		to_remove.append(idx)
+	to_remove.sort()
+	to_remove.reverse()
+	for idx in to_remove:
+		pck_entries.remove_at(idx)
+	_refresh_list()
 
-func _on_browse_pressed() -> void:
-	import_dialog.hide()
-	var dialog := FileDialog.new()
-	dialog.title = "选择关卡目录"
-	dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
-	dialog.access = FileDialog.ACCESS_FILESYSTEM
-	dialog.dir_selected.connect(func(path: String):
-		source_path_edit.text = path
-		_refresh_level_list()
-		dialog.queue_free()
-		import_dialog.popup_centered()
-	)
-	dialog.close_requested.connect(func():
-		dialog.queue_free()
-		import_dialog.popup_centered()
-	)
-	add_child(dialog)
-	dialog.popup_centered(Vector2i(800, 600))
+const PCK_DIR_ACCESS_PATH := "res://addons/PCKManager/PCKDirAccess.gd"
+
+func _on_verify_pressed() -> void:
+	var selected := pck_list.get_selected_items()
+	if selected.is_empty():
+		EditorInterface.get_editor_toaster().push_toast("请先选择要验证的PCK", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+
+	var pck_dir_script := load(PCK_DIR_ACCESS_PATH)
+	if pck_dir_script == null:
+		EditorInterface.get_editor_toaster().push_toast("无法加载 PCKDirAccess", EditorInterface.get_editor_toaster().SEVERITY_ERROR)
+		return
+
+	for idx in selected:
+		if idx < 0 or idx >= pck_entries.size():
+			continue
+		var entry: Dictionary = pck_entries[idx]
+		var path: String = entry["file"]
+		print("[ugc_import] Verifying: ", path)
+
+		if not FileAccess.file_exists(path):
+			print("[ugc_import] FAIL: file does not exist: ", path)
+			entry["status"] = VerifyStatus.FAILED
+			continue
+
+		var pck_dir: RefCounted = pck_dir_script.new()
+		pck_dir.open(path)
+		var paths: Array = pck_dir.get_paths()
+
+		if paths.is_empty():
+			pck_dir.close()
+			print("[ugc_import] FAIL: PCK has no file entries")
+			entry["status"] = VerifyStatus.FAILED
+			continue
+
+		var level_info := _find_level_data_in_pck(pck_dir, paths)
+		pck_dir.close()
+
+		if level_info.is_empty():
+			print("[ugc_import] NO_LEVEL: PCK has no level content")
+			entry["status"] = VerifyStatus.NO_LEVEL
+			entry.erase("level_info")
+		else:
+			entry["status"] = VerifyStatus.PASSED
+			entry["level_info"] = level_info
+			print("[ugc_import] PASS: found level: ", level_info)
+
+	_refresh_list()
+	EditorInterface.get_editor_toaster().push_toast("验证完成", EditorInterface.get_editor_toaster().SEVERITY_INFO)
+
+func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
+	var scene_dirs: Dictionary = {}
+	for p in paths:
+		var p_str: String = str(p)
+		var clean := p_str.trim_suffix(".remap")
+		if not clean.contains("[Scenes]/"):
+			continue
+		var scenes_idx := clean.find("[Scenes]/")
+		var after := clean.substr(scenes_idx + "[Scenes]/".length())
+		var parts := after.split("/")
+		if parts.size() >= 2:
+			var dir_name: String = parts[0]
+			var file_name: String = parts[1]
+			if not scene_dirs.has(dir_name):
+				scene_dirs[dir_name] = {"has_tscn": false, "has_tres": false}
+			if file_name.ends_with(".tscn"):
+				scene_dirs[dir_name]["has_tscn"] = true
+			elif file_name.ends_with(".tres"):
+				scene_dirs[dir_name]["has_tres"] = true
+
+	var best_dir: String = ""
+	for dir_name in scene_dirs:
+		var info: Dictionary = scene_dirs[dir_name]
+		if info["has_tscn"] and info["has_tres"]:
+			best_dir = dir_name
+			break
+
+	if best_dir.is_empty():
+		for p in paths:
+			var p_str: String = str(p).trim_suffix(".remap")
+			if p_str.ends_with(".tscn"):
+				best_dir = "unknown"
+				break
+
+	if best_dir.is_empty():
+		return {}
+
+	var info: Dictionary = {"name": best_dir}
+	return info
 
 func _on_import_confirmed() -> void:
-	var selected := level_list.get_selected_items()
-	if selected.is_empty():
-		EditorInterface.get_editor_toaster().push_toast("请先选择关卡", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+	var to_import: Array[Dictionary] = []
+	for entry in pck_entries:
+		if entry["status"] == VerifyStatus.PASSED:
+			to_import.append(entry)
+
+	if to_import.is_empty():
+		EditorInterface.get_editor_toaster().push_toast("没有验证通过的PCK可导入", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
 		return
-	
-	var do_pack_pck := pack_pck_check.button_pressed
-	DirAccess.make_dir_recursive_absolute(LEVELS_DIR)
-	if do_pack_pck:
-		DirAccess.make_dir_recursive_absolute(PCK_OUTPUT_DIR)
-	
-	for index in selected:
-		var meta: Dictionary = level_list.get_item_metadata(index)
-		_import_level(meta, do_pack_pck)
-	
-	EditorInterface.get_editor_toaster().push_toast("导入完成！共 %d 个" % selected.size(), EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
-func _import_level(meta: Dictionary, do_pack_pck: bool) -> void:
-	var level_name: String = meta["name"]
-	var source_dir: String = meta["dir"]
-	var target_dir := LEVELS_DIR.path_join(level_name)
-	
-	DirAccess.make_dir_recursive_absolute(target_dir)
-	_copy_directory_recursive(source_dir, target_dir)
-	_import_missing_template_resources(source_dir)
-	
-	if do_pack_pck:
-		_pack_to_pck(level_name, target_dir)
-	
-	print("Imported: ", level_name, " -> ", target_dir)
+	DirAccess.make_dir_recursive_absolute(PCK_OUTPUT_DIR)
 
-func _import_missing_template_resources(source_dir: String) -> void:
-	var dir := DirAccess.open(source_dir)
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var name := dir.get_next()
-	while name != "":
-		if dir.current_is_dir() and not name.begins_with("."):
-			_import_missing_template_resources(source_dir.path_join(name))
-		elif name.ends_with(".tscn") or name.ends_with(".tres"):
-			_copy_missing_resources(source_dir.path_join(name), source_dir)
-		name = dir.get_next()
-	dir.list_dir_end()
+	var conflicts: Array[Dictionary] = []
+	for entry in to_import:
+		var path: String = entry["file"]
+		var dest := PCK_OUTPUT_DIR.path_join(path.get_file())
+		var global_dest := ProjectSettings.globalize_path(dest)
+		if FileAccess.file_exists(global_dest):
+			conflicts.append(entry)
 
-func _copy_missing_resources(file_path: String, source_dir: String) -> void:
-	var file := FileAccess.open(file_path, FileAccess.READ)
-	if file == null:
-		return
-	var content := file.get_as_text()
-	file.close()
-	
-	var regex := RegEx.new()
-	regex.compile('\\[ext_resource[^\\]]*path="([^"]+)"[^\\]]*\\]')
-	var matches := regex.search_all(content)
-	for m in matches:
-		var res_path := m.get_string(1)
-		if res_path.begins_with("res://") and not res_path.begins_with("res://levels/"):
-			var global_path := ProjectSettings.globalize_path(res_path)
-			if not FileAccess.file_exists(global_path):
-				_try_copy_from_source(res_path, source_dir)
-
-func _try_copy_from_source(res_path: String, source_dir: String) -> void:
-	var relative_path := res_path.replace("res://", "")
-	var template_pos := source_dir.find("#Template")
-	var source_project_root: String
-	if template_pos >= 0:
-		source_project_root = source_dir.left(template_pos).path_join("")
+	if not conflicts.is_empty():
+		_import_with_overwrite_check(to_import, conflicts)
 	else:
-		source_project_root = source_dir.get_base_dir().get_base_dir()
-	var source_file := source_project_root.path_join(relative_path)
-	var dest_file := ProjectSettings.globalize_path(res_path)
-	
-	if not FileAccess.file_exists(source_file):
-		push_warning("Source not found: " + source_file)
-		return
-	
-	DirAccess.make_dir_recursive_absolute(dest_file.get_base_dir())
-	DirAccess.copy_absolute(source_file, dest_file)
-	print("  Copied: ", res_path)
-	
-	var import_src := source_file + ".import"
-	var import_dst := dest_file + ".import"
-	if FileAccess.file_exists(import_src):
-		DirAccess.copy_absolute(import_src, import_dst)
-		print("  Copied import: ", res_path + ".import")
-		_copy_imported_cache_files(import_src, source_project_root)
+		_do_import(to_import)
 
-func _copy_imported_cache_files(import_file_path: String, source_project_root: String) -> void:
-	var import_file := ConfigFile.new()
-	if import_file.load(import_file_path) != OK:
-		return
-	
-	if import_file.has_section_key("remap", "path.s3tc"):
-		var cache_path: String = str(import_file.get_value("remap", "path.s3tc", ""))
-		if cache_path != "":
-			var cache_relative: String = cache_path.replace("res://", "")
-			var cache_src: String = source_project_root.path_join(cache_relative)
-			var cache_dst: String = ProjectSettings.globalize_path(cache_path)
-			if FileAccess.file_exists(cache_src):
-				DirAccess.make_dir_recursive_absolute(cache_dst.get_base_dir())
-				DirAccess.copy_absolute(cache_src, cache_dst)
-				print("  Copied cache: ", cache_path)
+func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array[Dictionary]) -> void:
+	var conflict_names := conflicts.map(func(e: Dictionary) -> String: return e["file"].get_file())
+	overwrite_dialog.get_label().text = "以下PCK文件已存在：\n" + "\n".join(conflict_names) + "\n\n是否覆盖？"
+	overwrite_dialog.confirmed.connect(
+		func(): _do_import(to_import),
+		Object.CONNECT_ONE_SHOT
+	)
+	overwrite_dialog.canceled.connect(
+		func(): _do_import(to_import.filter(func(e: Dictionary) -> bool: return e not in conflicts)),
+		Object.CONNECT_ONE_SHOT
+	)
+	overwrite_dialog.popup_centered()
 
-func _copy_directory_recursive(source: String, target: String) -> void:
-	var dir := DirAccess.open(source)
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var name := dir.get_next()
-	while name != "":
-		if name != "." and name != "..":
-			var src := source.path_join(name)
-			var dst := target.path_join(name)
-			if dir.current_is_dir():
-				DirAccess.make_dir_recursive_absolute(dst)
-				_copy_directory_recursive(src, dst)
-			else:
-				DirAccess.make_dir_recursive_absolute(dst.get_base_dir())
-				DirAccess.copy_absolute(ProjectSettings.globalize_path(src), ProjectSettings.globalize_path(dst))
-		name = dir.get_next()
-	dir.list_dir_end()
+func _do_import(entries: Array[Dictionary]) -> void:
+	var count := 0
+	for entry in entries:
+		var path: String = entry["file"]
+		var dest := PCK_OUTPUT_DIR.path_join(path.get_file())
+		var global_dest := ProjectSettings.globalize_path(dest)
+		var err := DirAccess.copy_absolute(path, global_dest)
+		if err == OK:
+			count += 1
+			print("Imported PCK: ", dest)
+		else:
+			push_warning("Failed to import PCK: ", path, " error: ", err)
 
-func _pack_to_pck(level_name: String, level_dir: String) -> void:
-	var pck_path := ProjectSettings.globalize_path(PCK_OUTPUT_DIR).path_join(level_name + ".pck")
-	var packer := PCKPacker.new()
-	if packer.pck_start(pck_path) != OK:
-		return
-	_add_dir_to_pck(packer, level_dir, "levels/" + level_name)
-	_add_template_resources(packer, level_dir)
-	packer.flush()
-	print("Packed: ", pck_path)
-
-func _add_template_resources(packer: PCKPacker, level_dir: String) -> void:
-	var dir := DirAccess.open(level_dir)
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var name := dir.get_next()
-	while name != "":
-		if dir.current_is_dir() and not name.begins_with("."):
-			_add_template_resources(packer, level_dir.path_join(name))
-		elif name.ends_with(".tscn") or name.ends_with(".tres"):
-			var file_path := level_dir.path_join(name)
-			_pack_external_resources(packer, file_path)
-		name = dir.get_next()
-	dir.list_dir_end()
-
-func _pack_external_resources(packer: PCKPacker, file_path: String) -> void:
-	var file := FileAccess.open(file_path, FileAccess.READ)
-	if file == null:
-		return
-	var content := file.get_as_text()
-	file.close()
-	
-	var regex := RegEx.new()
-	regex.compile('\\[ext_resource[^\\]]*path="([^"]+)"[^\\]]*\\]')
-	var matches := regex.search_all(content)
-	for m in matches:
-		var res_path := m.get_string(1)
-		if res_path.begins_with("res://") and not res_path.begins_with("res://levels/"):
-			var global_path := ProjectSettings.globalize_path(res_path)
-			if FileAccess.file_exists(global_path):
-				packer.add_file(res_path, global_path)
-				print("  Added template resource: ", res_path)
-				_pack_imported_cache(packer, res_path)
-			else:
-				push_warning("  Template resource not found: " + res_path)
-
-func _pack_imported_cache(packer: PCKPacker, res_path: String) -> void:
-	var import_path := res_path + ".import"
-	var import_global := ProjectSettings.globalize_path(import_path)
-	if not FileAccess.file_exists(import_global):
-		return
-	
-	var import_file := ConfigFile.new()
-	if import_file.load(import_global) != OK:
-		return
-	
-	if import_file.has_section_key("remap", "path.s3tc"):
-		var cache_path := import_file.get_value("remap", "path.s3tc", "")
-		if cache_path != "":
-			var cache_global := ProjectSettings.globalize_path(cache_path)
-			if FileAccess.file_exists(cache_global):
-				packer.add_file(cache_path, cache_global)
-				print("  Added imported cache: ", cache_path)
-	
-	if import_file.has_section_key("deps", "dest_files"):
-		var dest_files: PackedStringArray = import_file.get_value("deps", "dest_files", [])
-		for dest in dest_files:
-			var dest_global := ProjectSettings.globalize_path(dest)
-			if FileAccess.file_exists(dest_global):
-				packer.add_file(dest, dest_global)
-
-func _add_dir_to_pck(packer: PCKPacker, dir_path: String, prefix: String) -> void:
-	var dir := DirAccess.open(dir_path)
-	if dir == null:
-		return
-	dir.list_dir_begin()
-	var name := dir.get_next()
-	while name != "":
-		if name != "." and name != "..":
-			var file := dir_path.path_join(name)
-			var pck := prefix.path_join(name)
-			if dir.current_is_dir():
-				_add_dir_to_pck(packer, file, pck)
-			else:
-				packer.add_file(pck, ProjectSettings.globalize_path(file))
-		name = dir.get_next()
-	dir.list_dir_end()
+	EditorInterface.get_editor_toaster().push_toast("导入完成！成功 %d 个" % count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
+	pck_entries.clear()
+	_refresh_list()

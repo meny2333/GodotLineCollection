@@ -17,7 +17,10 @@ warnings/check_invalid_track_paths=false
 config/name="GodotLineCollection"
 config/features=PackedStringArray("4.6")
 boot_splash/show_image=false
-config/icon="res://icon.svg"
+
+[autoload]
+
+PCKLoader="*uid://bj5aexif6bhwh"
 
 [debug]
 
@@ -29,7 +32,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/ugc_import/plugin.cfg")
+enabled=PackedStringArray("res://addons/PCKManager/plugin.cfg", "res://addons/ugc_import/plugin.cfg")
 
 [input]
 

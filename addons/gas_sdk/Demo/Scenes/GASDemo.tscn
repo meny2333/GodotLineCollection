@@ -1,0 +1,92 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/gas_sdk/Demo/Scripts/GASDemo.gd" id="1"]
+
+[node name="GASDemo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BtnOAuth" type="Button" parent="VBox"]
+layout_mode = 2
+text = "OAuth 登录"
+
+[node name="BtnProfile" type="Button" parent="VBox"]
+layout_mode = 2
+text = "获取 Profile"
+
+[node name="BtnSaveArchive" type="Button" parent="VBox"]
+layout_mode = 2
+text = "保存存档"
+
+[node name="BtnReadArchive" type="Button" parent="VBox"]
+layout_mode = 2
+text = "读取存档"
+
+[node name="HBoxVersion" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/HBoxVersion"]
+layout_mode = 2
+text = "版本序列："
+
+[node name="VersionInput" type="LineEdit" parent="VBox/HBoxVersion"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "输入版本序列"
+
+[node name="BtnVersion" type="Button" parent="VBox"]
+layout_mode = 2
+text = "查询版本"
+
+[node name="HBoxRedeem" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/HBoxRedeem"]
+layout_mode = 2
+text = "兑换码："
+
+[node name="RedeemInput" type="LineEdit" parent="VBox/HBoxRedeem"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "输入兑换码"
+
+[node name="BtnRedeem" type="Button" parent="VBox"]
+layout_mode = 2
+text = "兑换"
+
+[node name="BtnLogout" type="Button" parent="VBox"]
+layout_mode = 2
+text = "退出登录"
+
+[node name="HBoxLang" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="BtnLangZH" type="Button" parent="VBox/HBoxLang"]
+layout_mode = 2
+text = "中文"
+
+[node name="BtnLangEN" type="Button" parent="VBox/HBoxLang"]
+layout_mode = 2
+text = "English"
+
+[node name="LogPanel" type="PanelContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LogText" type="RichTextLabel" parent="VBox/LogPanel"]
+layout_mode = 2
+bbcode_enabled = true
+scroll_following = true

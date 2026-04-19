@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="GASConfig" format=3 uid="uid://bt6i6m7dsjdla"]
+
+[ext_resource type="Script" uid="uid://ds450a1dap8k" path="res://addons/gas_sdk/GAS/Config/GASConfig.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+app_id = 88
+app_token = "ZlRK3Joc4Sx09ueD"

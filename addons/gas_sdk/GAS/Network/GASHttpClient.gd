@@ -13,7 +13,8 @@ func post(url: String, body: Dictionary, type: int = -1) -> Dictionary:
 	GASResponseLogger.log_request("POST", full_url, json_body)
 	
 	var http: HTTPRequest = HTTPRequest.new()
-	Engine.get_main_loop().root.get_viewport().add_child(http)
+	Engine.get_main_loop().root.add_child.call_deferred(http)
+	await Engine.get_main_loop().process_frame
 	
 	var headers: PackedStringArray = ["Content-Type: application/json"]
 	var start_time: float = Time.get_ticks_msec()
@@ -55,7 +56,8 @@ func http_get(url: String) -> Dictionary:
 	GASResponseLogger.log_request("GET", full_url, "")
 	
 	var http: HTTPRequest = HTTPRequest.new()
-	Engine.get_main_loop().root.get_viewport().add_child(http)
+	Engine.get_main_loop().root.add_child.call_deferred(http)
+	await Engine.get_main_loop().process_frame
 	
 	var start_time: float = Time.get_ticks_msec()
 	var error: Error = http.request(full_url, [], HTTPClient.METHOD_GET)

@@ -8,7 +8,6 @@ extends Control
 @onready var user_button: Button = $Margin/VBox/Header/UserButton
 @onready var play_button: Button = $Margin/VBox/Info/Actions/PlayButton
 @onready var info_button: Button = $Margin/VBox/Info/Actions/InfoButton
-@onready var bookmark_button: Button = $Margin/VBox/Info/Actions/BookmarkButton
 @onready var stars_label: Label = $Margin/VBox/Info/Actions/StarsLabel
 @onready var counter_label: Label = $Margin/VBox/Preview/CounterLabel
 @onready var load_pck_button: Button = $Margin/VBox/Bottom/LoadPckButton
@@ -18,14 +17,15 @@ var levels: Dictionary = {}
 var level_keys: Array = []
 var current_index: int = 0
 var loaded_pcks: Array[String] = []
-var _bookmarks: Dictionary = {}
+var _music_player: AudioStreamPlayer
 
 const LEVELS_DIR := "res://levels"
 const PCK_DIR := "res://pck_levels"
-const BOOKMARK_PATH := "user://bookmarks.cfg"
 
 func _ready() -> void:
-	_load_bookmarks()
+	_music_player = AudioStreamPlayer.new()
+	_music_player.bus = "Music"
+	add_child(_music_player)
 	_scan_levels()
 	_try_load_pck_level_data()
 	_rebuild_keys()
@@ -47,7 +47,6 @@ func _update_display() -> void:
 		left_arrow.visible = false
 		right_arrow.visible = false
 		counter_label.text = ""
-		bookmark_button.text = "收藏"
 		return
 	
 	left_arrow.visible = level_keys.size() > 1
@@ -76,7 +75,6 @@ func _update_display() -> void:
 	counter_label.text = "%d / %d" % [current_index + 1, level_keys.size()]
 	
 	play_button.disabled = false
-	bookmark_button.text = "已收藏" if _bookmarks.has(key) else "收藏"
 	
 	var pck_file: String = info["pck"]
 	if not pck_file.is_empty():
@@ -87,6 +85,17 @@ func _update_display() -> void:
 		load_pck_button.text = "加载PCK"
 	
 	info_label.text = ""
+	_play_level_music(data)
+
+
+func _play_level_music(data: LevelData) -> void:
+	if data == null or data.levelAudioClip == null:
+		_music_player.stop()
+		return
+	if _music_player.stream == data.levelAudioClip and _music_player.playing:
+		return
+	_music_player.stream = data.levelAudioClip
+	_music_player.play()
 
 
 func _on_left_arrow() -> void:
@@ -153,19 +162,6 @@ func _on_info_button() -> void:
 	info_label.text = detail
 
 
-func _on_bookmark_button() -> void:
-	if level_keys.is_empty():
-		return
-	var key: String = str(level_keys[current_index])
-	if _bookmarks.has(key):
-		_bookmarks.erase(key)
-		bookmark_button.text = "收藏"
-	else:
-		_bookmarks[key] = true
-		bookmark_button.text = "已收藏"
-	_save_bookmarks()
-
-
 func _on_load_pck_button_pressed() -> void:
 	if level_keys.is_empty():
 		return
@@ -201,21 +197,6 @@ func _update_login_state() -> void:
 			user_button.text = "用户"
 	else:
 		user_button.text = "登录"
-
-
-func _load_bookmarks() -> void:
-	var config := ConfigFile.new()
-	if config.load(BOOKMARK_PATH) == OK:
-		for key in config.get_section_keys("bookmarks"):
-			_bookmarks[key] = true
-
-
-func _save_bookmarks() -> void:
-	var config := ConfigFile.new()
-	config.erase_section("bookmarks")
-	for key in _bookmarks:
-		config.set_value("bookmarks", key, true)
-	config.save(BOOKMARK_PATH)
 
 
 func _scan_levels() -> void:

@@ -21,8 +21,8 @@ boot_splash/show_image=false
 
 [autoload]
 
-PCKLoader="*uid://bj5aexif6bhwh"
 CloudArchiveService="*res://Scripts/gas/cloud_archive_service.gd"
+PCKLoader="*uid://bj5aexif6bhwh"
 
 [debug]
 

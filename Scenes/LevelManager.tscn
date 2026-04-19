@@ -272,16 +272,6 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_YellowBtnHover")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
 text = "详细信息"
 
-[node name="BookmarkButton" type="Button" parent="Margin/VBox/Info/Actions" unique_id=833063268]
-custom_minimum_size = Vector2(0, 34)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.85)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_YellowBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_YellowBtnPressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_YellowBtnHover")
-text = "收藏"
-
 [node name="PlayButton" type="Button" parent="Margin/VBox/Info/Actions" unique_id=229019772]
 custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
@@ -332,6 +322,5 @@ text = "刷新列表"
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/LeftArrow" to="." method="_on_left_arrow"]
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/RightArrow" to="." method="_on_right_arrow"]
 [connection signal="pressed" from="Margin/VBox/Info/Actions/InfoButton" to="." method="_on_info_button"]
-[connection signal="pressed" from="Margin/VBox/Info/Actions/BookmarkButton" to="." method="_on_bookmark_button"]
 [connection signal="pressed" from="Margin/VBox/Info/Actions/PlayButton" to="." method="_on_play_button_pressed"]
 [connection signal="pressed" from="Margin/VBox/Bottom/LoadPckButton" to="." method="_on_load_pck_button_pressed"]

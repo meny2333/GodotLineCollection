@@ -222,6 +222,7 @@ func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 				scene_dirs[dir_name]["has_tres"] = true
 
 	var best_dir: String = ""
+	var best_scene_path: String = ""
 	for dir_name in scene_dirs:
 		var info: Dictionary = scene_dirs[dir_name]
 		if info["has_tscn"] and info["has_tres"]:
@@ -233,12 +234,19 @@ func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 			var p_str: String = str(p).trim_suffix(".remap")
 			if p_str.ends_with(".tscn"):
 				best_dir = "unknown"
+				best_scene_path = p_str.trim_suffix(".remap")
+				break
+	else:
+		for p in paths:
+			var p_str: String = str(p).trim_suffix(".remap")
+			if p_str.contains("[Scenes]/%s/" % best_dir) and p_str.ends_with(".tscn"):
+				best_scene_path = p_str
 				break
 
 	if best_dir.is_empty():
 		return {}
 
-	var info: Dictionary = {"name": best_dir}
+	var info: Dictionary = {"name": best_dir, "scene_path": best_scene_path}
 	return info
 
 func _on_import_confirmed() -> void:
@@ -279,6 +287,8 @@ func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array
 	)
 	overwrite_dialog.popup_centered()
 
+const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
+
 func _do_import(entries: Array[Dictionary]) -> void:
 	var count := 0
 	for entry in entries:
@@ -289,9 +299,43 @@ func _do_import(entries: Array[Dictionary]) -> void:
 		if err == OK:
 			count += 1
 			print("Imported PCK: ", dest)
+			_upsert_level_list(dest, entry)
 		else:
 			push_warning("Failed to import PCK: ", path, " error: ", err)
 
 	EditorInterface.get_editor_toaster().push_toast("导入完成！成功 %d 个" % count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
 	pck_entries.clear()
 	_refresh_list()
+
+
+func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
+	var level_info: Dictionary = entry.get("level_info", {})
+	var scene_path := _extract_scene_path(pck_res_path, level_info)
+	var title: String = level_info.get("name", pck_res_path.get_file().get_basename())
+
+	var list: MenuLevelList
+	if ResourceLoader.exists(LEVEL_LIST_PATH):
+		list = load(LEVEL_LIST_PATH) as MenuLevelList
+	if list == null:
+		list = MenuLevelList.new()
+
+	for data in list.levels:
+		if data.pck_path == pck_res_path:
+			data.title = title
+			data.scene_path = scene_path
+			ResourceSaver.save(list, LEVEL_LIST_PATH)
+			return
+
+	var data := MenuLevelData.new()
+	data.title = title
+	data.pck_path = pck_res_path
+	data.scene_path = scene_path
+	list.levels.append(data)
+	ResourceSaver.save(list, LEVEL_LIST_PATH)
+
+
+func _extract_scene_path(pck_path: String, level_info: Dictionary) -> String:
+	var scene_path: String = level_info.get("scene_path", "")
+	if not scene_path.is_empty():
+		return scene_path
+	return ""

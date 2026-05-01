@@ -46,18 +46,6 @@ corner_radius_top_right = 30
 corner_radius_bottom_right = 30
 corner_radius_bottom_left = 30
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Preview"]
-bg_color = Color(0.08, 0.08, 0.13, 0.85)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.25, 0.3, 0.45, 0.4)
-corner_radius_top_left = 14
-corner_radius_top_right = 14
-corner_radius_bottom_right = 14
-corner_radius_bottom_left = 14
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_YellowBtn"]
 bg_color = Color(0.92, 0.7, 0.03, 0.9)
 corner_radius_top_left = 20
@@ -199,20 +187,11 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_ArrowBtn")
 action_mode = 0
 text = "<"
 
-[node name="PreviewPanel" type="PanelContainer" parent="Margin/VBox/Preview/PreviewRow" unique_id=45754166]
+[node name="PreviewClip" type="Control" parent="Margin/VBox/Preview/PreviewRow" unique_id=45754166]
+clip_contents = true
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 5.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_Preview")
-
-[node name="CenterContainer" type="CenterContainer" parent="Margin/VBox/Preview/PreviewRow/PreviewPanel" unique_id=1299654576]
-layout_mode = 2
-
-[node name="PreviewLabel" type="Label" parent="Margin/VBox/Preview/PreviewRow/PreviewPanel/CenterContainer" unique_id=955365930]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.88, 1, 0.5)
-theme_override_font_sizes/font_size = 32
-horizontal_alignment = 1
 
 [node name="RightArrow" type="Button" parent="Margin/VBox/Preview/PreviewRow" unique_id=1739859733]
 custom_minimum_size = Vector2(50, 50)
@@ -272,17 +251,6 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_YellowBtnHover")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
 text = "详细信息"
 
-[node name="PlayButton" type="Button" parent="Margin/VBox/Info/Actions" unique_id=229019772]
-custom_minimum_size = Vector2(0, 34)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.85)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_YellowBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_YellowBtnPressed")
-theme_override_styles/hover = SubResource("StyleBoxFlat_YellowBtnHover")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
-text = "开始游戏"
-
 [node name="Bottom" type="HBoxContainer" parent="Margin/VBox" unique_id=1601328175]
 layout_mode = 2
 theme_override_constants/separation = 10
@@ -293,18 +261,6 @@ size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.5, 0.52, 0.65, 0.8)
 theme_override_font_sizes/font_size = 12
 autowrap_mode = 2
-
-[node name="LoadPckButton" type="Button" parent="Margin/VBox/Bottom" unique_id=99617848]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.77, 0.88, 1)
-theme_override_colors/font_disabled_color = Color(0.4, 0.4, 0.45, 0.5)
-theme_override_font_sizes/font_size = 12
-theme_override_styles/normal = SubResource("StyleBoxFlat_SecBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_SecBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_SecBtnHover")
-theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
-text = "加载PCK"
 
 [node name="RefreshButton" type="Button" parent="Margin/VBox/Bottom" unique_id=5712952]
 visible = false
@@ -322,5 +278,3 @@ text = "刷新列表"
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/LeftArrow" to="." method="_on_left_arrow"]
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/RightArrow" to="." method="_on_right_arrow"]
 [connection signal="pressed" from="Margin/VBox/Info/Actions/InfoButton" to="." method="_on_info_button"]
-[connection signal="pressed" from="Margin/VBox/Info/Actions/PlayButton" to="." method="_on_play_button_pressed"]
-[connection signal="pressed" from="Margin/VBox/Bottom/LoadPckButton" to="." method="_on_load_pck_button_pressed"]

@@ -551,12 +551,17 @@ func _load_level_list() -> MenuLevelList:
 	var list = load(LEVEL_LIST_PATH)
 	if list is MenuLevelList:
 		return list
+	push_warning("Failed to load level list: invalid resource type")
 	return null
 
 func _save_level_list(list: MenuLevelList) -> void:
+	if list == null:
+		push_error("Cannot save null level list")
+		return
 	var err := ResourceSaver.save(list, LEVEL_LIST_PATH)
 	if err != OK:
 		push_error("Failed to save level list: ", err)
+		EditorInterface.get_editor_toaster().push_toast("保存失败", EditorInterface.get_editor_toaster().SEVERITY_ERROR)
 
 func _refresh_manage_list() -> void:
 	manage_list.clear()
@@ -620,6 +625,7 @@ func _on_delete_confirmed() -> void:
 		return
 
 	var deleted_count := 0
+	var failed_count := 0
 	for idx in sorted_selected:
 		if idx >= 0 and idx < list.levels.size():
 			var level := list.levels[idx]
@@ -630,6 +636,8 @@ func _on_delete_confirmed() -> void:
 					var err := DirAccess.remove_absolute(global_path)
 					if err != OK:
 						push_warning("Failed to delete PCK file: ", level.pck_path)
+						failed_count += 1
+						continue
 			# 从列表中移除
 			list.levels.remove_at(idx)
 			deleted_count += 1
@@ -637,7 +645,10 @@ func _on_delete_confirmed() -> void:
 	_save_level_list(list)
 	_refresh_manage_list()
 
-	EditorInterface.get_editor_toaster().push_toast("已删除 %d 个关卡" % deleted_count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
+	if failed_count > 0:
+		EditorInterface.get_editor_toaster().push_toast("删除完成：%d 成功，%d 失败" % [deleted_count, failed_count], EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+	else:
+		EditorInterface.get_editor_toaster().push_toast("已删除 %d 个关卡" % deleted_count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
 func _on_move_up() -> void:
 	var selected := manage_list.get_selected_items()

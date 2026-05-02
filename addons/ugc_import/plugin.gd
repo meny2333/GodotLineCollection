@@ -17,6 +17,7 @@ var delete_button: Button
 var move_up_button: Button
 var move_down_button: Button
 var edit_dialog: ConfirmationDialog
+var delete_confirm_dialog: ConfirmationDialog
 
 var managed_levels: Array[MenuLevelData] = []
 
@@ -78,6 +79,14 @@ func _enter_tree() -> void:
 	edit_dialog.ok_button_text = "保存"
 	edit_dialog.confirmed.connect(_on_edit_confirmed)
 	add_child(edit_dialog)
+
+	# 创建删除确认对话框
+	delete_confirm_dialog = ConfirmationDialog.new()
+	delete_confirm_dialog.title = "确认删除"
+	delete_confirm_dialog.ok_button_text = "删除"
+	delete_confirm_dialog.cancel_button_text = "取消"
+	delete_confirm_dialog.confirmed.connect(_on_delete_confirmed)
+	add_child(delete_confirm_dialog)
 
 func _create_import_tab() -> Control:
 	var vbox := VBoxContainer.new()
@@ -163,6 +172,8 @@ func _exit_tree() -> void:
 	import_dialog.queue_free()
 	file_dialog.queue_free()
 	overwrite_dialog.queue_free()
+	edit_dialog.queue_free()
+	delete_confirm_dialog.queue_free()
 
 func _on_import_pressed() -> void:
 	_refresh_list()
@@ -485,7 +496,52 @@ func _on_edit_selected() -> void:
 	pass
 
 func _on_delete_selected() -> void:
-	pass
+	var selected := manage_list.get_selected_items()
+	if selected.is_empty():
+		EditorInterface.get_editor_toaster().push_toast("请先选择要删除的关卡", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+
+	var names: PackedStringArray = []
+	for idx in selected:
+		if idx >= 0 and idx < managed_levels.size():
+			names.append(managed_levels[idx].title if managed_levels[idx].title != "" else "未命名关卡")
+
+	delete_confirm_dialog.get_label().text = "确定要删除以下关卡吗？\n" + "\n".join(names) + "\n\n这将同时删除PCK文件和关卡数据。"
+	delete_confirm_dialog.popup_centered()
+
+func _on_delete_confirmed() -> void:
+	var selected := manage_list.get_selected_items()
+	if selected.is_empty():
+		return
+
+	# 从后往前删除，避免索引问题
+	var sorted_selected := selected.duplicate()
+	sorted_selected.sort()
+	sorted_selected.reverse()
+
+	var list := _load_level_list()
+	if list == null:
+		return
+
+	var deleted_count := 0
+	for idx in sorted_selected:
+		if idx >= 0 and idx < list.levels.size():
+			var level := list.levels[idx]
+			# 删除PCK文件
+			if not level.pck_path.is_empty():
+				var global_path := ProjectSettings.globalize_path(level.pck_path)
+				if FileAccess.file_exists(global_path):
+					var err := DirAccess.remove_absolute(global_path)
+					if err != OK:
+						push_warning("Failed to delete PCK file: ", level.pck_path)
+			# 从列表中移除
+			list.levels.remove_at(idx)
+			deleted_count += 1
+
+	_save_level_list(list)
+	_refresh_manage_list()
+
+	EditorInterface.get_editor_toaster().push_toast("已删除 %d 个关卡" % deleted_count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
 func _on_move_up() -> void:
 	pass

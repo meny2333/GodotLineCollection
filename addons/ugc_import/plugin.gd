@@ -74,7 +74,7 @@ func _enter_tree() -> void:
 
 	import_dialog = ConfirmationDialog.new()
 	import_dialog.title = "UGC关卡管理"
-	import_dialog.size = Vector2i(700, 550)
+	import_dialog.size = Vector2i(700, 450)
 	import_dialog.ok_button_text = "导入"
 	import_dialog.confirmed.connect(_on_import_confirmed)
 
@@ -207,7 +207,7 @@ func _create_import_tab() -> Control:
 	vbox.add_child(header)
 
 	pck_list = ItemList.new()
-	pck_list.custom_minimum_size = Vector2(0, 300)
+	pck_list.custom_minimum_size = Vector2(0, 200)
 	pck_list.select_mode = ItemList.SELECT_MULTI
 	vbox.add_child(pck_list)
 
@@ -247,7 +247,7 @@ func _create_manage_tab() -> Control:
 	vbox.add_child(header)
 
 	manage_list = ItemList.new()
-	manage_list.custom_minimum_size = Vector2(0, 300)
+	manage_list.custom_minimum_size = Vector2(0, 200)
 	manage_list.select_mode = ItemList.SELECT_MULTI
 	vbox.add_child(manage_list)
 

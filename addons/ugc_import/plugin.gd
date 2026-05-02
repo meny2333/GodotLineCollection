@@ -22,18 +22,48 @@ enum VerifyStatus {
 
 func _enter_tree() -> void:
 	import_button = Button.new()
-	import_button.text = "UGC导入"
+	import_button.text = "UGC管理"
 	import_button.pressed.connect(_on_import_pressed)
 	add_control_to_container(CONTAINER_TOOLBAR, import_button)
 
 	import_dialog = ConfirmationDialog.new()
-	import_dialog.title = "导入PCK关卡"
-	import_dialog.size = Vector2i(600, 480)
+	import_dialog.title = "UGC关卡管理"
+	import_dialog.size = Vector2i(700, 550)
 	import_dialog.ok_button_text = "导入"
 	import_dialog.confirmed.connect(_on_import_confirmed)
 
+	var tab_container := TabContainer.new()
+	tab_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var import_tab := _create_import_tab()
+	tab_container.add_child(import_tab)
+	import_tab.name = "导入PCK"
+
+	var manage_tab := _create_manage_tab()
+	tab_container.add_child(manage_tab)
+	manage_tab.name = "关卡管理"
+
+	import_dialog.add_child(tab_container)
+	add_child(import_dialog)
+
+	file_dialog = FileDialog.new()
+	file_dialog.title = "选择PCK文件"
+	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
+	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	file_dialog.filters = PackedStringArray(["*.pck ; PCK文件"])
+	file_dialog.files_selected.connect(_on_files_selected)
+	file_dialog.close_requested.connect(func(): file_dialog.hide())
+	add_child(file_dialog)
+
+	overwrite_dialog = ConfirmationDialog.new()
+	overwrite_dialog.title = "覆盖确认"
+	overwrite_dialog.ok_button_text = "覆盖"
+	overwrite_dialog.cancel_button_text = "跳过"
+	add_child(overwrite_dialog)
+
+func _create_import_tab() -> Control:
 	var vbox := VBoxContainer.new()
-	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.name = "ImportTab"
 
 	var header := Label.new()
 	header.text = "选择 .pck 文件进行验证和导入："
@@ -68,23 +98,17 @@ func _enter_tree() -> void:
 	warn_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	vbox.add_child(warn_label)
 
-	import_dialog.add_child(vbox)
-	add_child(import_dialog)
+	return vbox
 
-	file_dialog = FileDialog.new()
-	file_dialog.title = "选择PCK文件"
-	file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
-	file_dialog.access = FileDialog.ACCESS_FILESYSTEM
-	file_dialog.filters = PackedStringArray(["*.pck ; PCK文件"])
-	file_dialog.files_selected.connect(_on_files_selected)
-	file_dialog.close_requested.connect(func(): file_dialog.hide())
-	add_child(file_dialog)
+func _create_manage_tab() -> Control:
+	var vbox := VBoxContainer.new()
+	vbox.name = "ManageTab"
 
-	overwrite_dialog = ConfirmationDialog.new()
-	overwrite_dialog.title = "覆盖确认"
-	overwrite_dialog.ok_button_text = "覆盖"
-	overwrite_dialog.cancel_button_text = "跳过"
-	add_child(overwrite_dialog)
+	var header := Label.new()
+	header.text = "已导入的关卡列表："
+	vbox.add_child(header)
+
+	return vbox
 
 func _exit_tree() -> void:
 	remove_control_from_container(CONTAINER_TOOLBAR, import_button)

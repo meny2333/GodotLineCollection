@@ -14,12 +14,11 @@ var _shown: bool = false
 # TopBar
 @onready var level_label = $UILayer/TopBar/LevelCapsule/Label
 @onready var player_label = $UILayer/TopBar/PlayerCapsule/VBox/Label
+@onready var avatar_rect: TextureRect = $UILayer/TopBar/PlayerCapsule/VBox/AvatarRect
 @onready var coords_label = $UILayer/TopBar/PlayerCapsule/VBox/Coords
 @onready var time_label = $UILayer/TopBar/TimeCapsule/VBox/Label
-@onready var fps_label = $UILayer/TopBar/TimeCapsule/VBox/FPS
 
 # BottomBar
-@onready var status_val = $UILayer/BottomBar/DataCards/StatusCard/Value
 @onready var diamond_val = $UILayer/BottomBar/DataCards/DiamondCard/VBox/Value
 @onready var crowns_hbox = $UILayer/BottomBar/DataCards/CrownCard/VBox/HBox
 @onready var progress_val = $UILayer/BottomBar/DataCards/ProgressCard/VBox/Value
@@ -33,6 +32,8 @@ func _ready() -> void:
 	back_btn.pressed.connect(_on_back_pressed)
 	_hide_revive()
 	set_process(true)
+	
+	UserManager.user_info_updated.connect(_on_user_info_updated)
 
 func _process(_delta: float) -> void:
 	var current_state = LevelManager.GameState
@@ -67,15 +68,13 @@ func _update_ui_data() -> void:
 	if p.level_data:
 		level_label.text = p.level_data.levelTitle
 	
-	player_label.text = "PLAYER"
+	_update_user_display()
 	coords_label.text = "(%.1f, %.1f, %.1f)" % [p.global_position.x, p.global_position.y, p.global_position.z]
 	
 	var time = Time.get_datetime_dict_from_system()
 	time_label.text = "%02d:%02d:%02d" % [time.hour, time.minute, time.second]
-	fps_label.text = "FPS: %d" % Engine.get_frames_per_second()
-	
+
 	# 2. 底部数据卡片
-	status_val.text = LevelManager.GameStatus.keys()[LevelManager.GameState]
 	diamond_val.text = "%d/10" % LevelManager.diamond
 	progress_val.text = "%d%%" % LevelManager.percent
 	
@@ -133,6 +132,20 @@ func _get_background_color() -> Color:
 		elif cam.environment.fog_enabled:
 			return cam.environment.fog_light_color
 	return Color(0.05, 0.1, 0.2)
+
+func _on_user_info_updated() -> void:
+	if _shown:
+		_update_user_display()
+
+
+func _update_user_display() -> void:
+	player_label.text = UserManager.get_display_name()
+	if UserManager.has_avatar():
+		avatar_rect.texture = UserManager.get_avatar_texture()
+		avatar_rect.visible = true
+	else:
+		avatar_rect.visible = false
+
 
 # --- 按钮逻辑 ---
 func _on_revive_pressed() -> void:

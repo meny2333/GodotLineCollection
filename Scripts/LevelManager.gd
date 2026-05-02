@@ -5,7 +5,9 @@ extends Control
 @onready var preview_clip: Control = $Margin/VBox/Preview/PreviewRow/PreviewClip
 @onready var left_arrow: Button = $Margin/VBox/Preview/PreviewRow/LeftArrow
 @onready var right_arrow: Button = $Margin/VBox/Preview/PreviewRow/RightArrow
-@onready var user_button: Button = $Margin/VBox/Header/UserButton
+@onready var user_capsule: PanelContainer = $Margin/VBox/Header/UserCapsule
+@onready var avatar_rect: TextureRect = $Margin/VBox/Header/UserCapsule/HBox/AvatarRect
+@onready var name_label: Label = $Margin/VBox/Header/UserCapsule/HBox/NameLabel
 @onready var info_button: Button = $Margin/VBox/Info/Actions/InfoButton
 @onready var counter_label: Label = $Margin/VBox/Preview/CounterLabel
 @onready var info_label: Label = $Margin/VBox/Bottom/InfoLabel
@@ -16,6 +18,7 @@ var current_index: int = 0
 var loaded_pcks: Array[String] = []
 var _music_player: AudioStreamPlayer
 var _animating: bool = false
+var _default_avatar: ImageTexture
 
 @onready var refresh_btn: Button = $Margin/VBox/Header/RefreshBtn
 
@@ -43,7 +46,9 @@ func _ready() -> void:
 	_create_list_view()
 	_scan_levels()
 	_update_display()
-	_update_login_state()
+	_update_user_display()
+	
+	UserManager.user_info_updated.connect(_update_user_display)
 
 
 func _create_view_toggle() -> void:
@@ -337,19 +342,29 @@ func _on_refresh_button_pressed() -> void:
 	info_label.text = "已刷新"
 
 
-func _on_login_button_pressed() -> void:
-	get_tree().change_scene_to_file("res://Scenes/gas_login.tscn")
-
-
-func _update_login_state() -> void:
-	if CloudArchiveService.has_credentials():
-		var config := GASLoginConfig.new()
-		if config.load():
-			user_button.text = config.email
+func _update_user_display() -> void:
+	if UserManager.user_nickname != "" or UserManager.user_email != "":
+		name_label.text = UserManager.get_display_name()
+		if UserManager.has_avatar():
+			avatar_rect.texture = UserManager.get_avatar_texture()
 		else:
-			user_button.text = "用户"
+			avatar_rect.texture = _make_default_avatar()
 	else:
-		user_button.text = "登录"
+		name_label.text = "Guest"
+		avatar_rect.texture = _make_default_avatar()
+
+
+func _make_default_avatar() -> ImageTexture:
+	if _default_avatar == null:
+		var image := Image.create(28, 28, false, Image.FORMAT_RGBA8)
+		image.fill(Color(0.3, 0.3, 0.3, 1))
+		_default_avatar = ImageTexture.create_from_image(image)
+	return _default_avatar
+
+
+func _on_user_capsule_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		get_tree().change_scene_to_file("res://Scenes/gas_login.tscn")
 
 
 func _scan_levels() -> void:

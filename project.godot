@@ -23,6 +23,7 @@ boot_splash/show_image=false
 
 GameUIHook="*res://Scripts/GameUIHook.gd"
 CloudArchiveService="*res://Scripts/gas/cloud_archive_service.gd"
+UserManager="*res://Scripts/UserManager.gd"
 
 [debug]
 

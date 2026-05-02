@@ -29,6 +29,7 @@ func _ready() -> void:
 	
 	btn_login.pressed.connect(_on_login)
 	btn_back.pressed.connect(_on_back)
+	UserManager.user_info_updated.connect(_on_user_info_updated)
 	
 	avatar_container.visible = false
 	user_info.visible = false
@@ -122,8 +123,9 @@ func _poll_auth(auth_token: String) -> void:
 func _on_login_success(data: Dictionary) -> void:
 	var nickname: String = str(data.get("nickname", ""))
 	var avatar_url: String = str(data.get("avatar", ""))
-	var location: String = str(data.get("location", ""))
 	var email: String = str(data.get("email", _email))
+	
+	UserManager.set_user_info(nickname, avatar_url, email)
 	
 	if nickname != "":
 		user_info.text = "%s\n%s" % [nickname, email]
@@ -133,10 +135,6 @@ func _on_login_success(data: Dictionary) -> void:
 	user_info.visible = true
 	status_label.text = "登录成功"
 	btn_login.visible = false
-	
-	if avatar_url != "":
-		avatar_container.visible = true
-		_load_avatar(avatar_url)
 	
 	CloudArchiveService.set_credentials(_email, _access_token)
 	CloudArchiveService.sync_on_login()
@@ -150,32 +148,12 @@ func _on_login_success(data: Dictionary) -> void:
 	_navigate_back()
 
 
-func _load_avatar(url: String) -> void:
-	var http: HTTPRequest = HTTPRequest.new()
-	add_child(http)
-	var err := http.request(url)
-	if err != OK:
-		http.queue_free()
+func _on_user_info_updated() -> void:
+	if not is_instance_valid(avatar_rect):
 		return
-	var result: Array = await http.request_completed
-	var result_code: int = result[1]
-	var body: PackedByteArray = result[3]
-	if result_code == 200 and body.size() > 0:
-		var image := Image.new()
-		var ext: String = url.get_extension().to_lower()
-		var img_err: int
-		if ext == "png":
-			img_err = image.load_png_from_buffer(body)
-		elif ext == "jpg" or ext == "jpeg":
-			img_err = image.load_jpg_from_buffer(body)
-		elif ext == "webp":
-			img_err = image.load_webp_from_buffer(body)
-		else:
-			img_err = image.load_jpg_from_buffer(body)
-		if img_err == OK:
-			var texture := ImageTexture.create_from_image(image)
-			avatar_rect.texture = texture
-	http.queue_free()
+	if UserManager.has_avatar():
+		avatar_rect.texture = UserManager.get_avatar_texture()
+		avatar_container.visible = true
 
 
 func _on_back() -> void:

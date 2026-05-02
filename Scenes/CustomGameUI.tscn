@@ -1,6 +1,6 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene format=3 uid="uid://0dkco7350qq"]
 
-[ext_resource type="Script" path="res://Scripts/CustomGameUI.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://b7ndk3x3c4rdq" path="res://Scripts/CustomGameUI.gd" id="1_script"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_Capsule"]
 bg_color = Color(0.05, 0.1, 0.25, 0.7)
@@ -30,9 +30,7 @@ corner_radius_bottom_left = 12
 shadow_color = Color(0, 0, 0, 0.3)
 shadow_size = 4
 
-[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_Buttons"]
-
-[node name="CustomGameUI" type="Control"]
+[node name="CustomGameUI" type="Control" unique_id=39720665]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -41,10 +39,10 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="UILayer" type="CanvasLayer" parent="."]
+[node name="UILayer" type="CanvasLayer" parent="." unique_id=1443397905]
 layer = 100
 
-[node name="TopBar" type="Control" parent="UILayer"]
+[node name="TopBar" type="Control" parent="UILayer" unique_id=1718108092]
 layout_mode = 3
 anchors_preset = 10
 anchor_right = 1.0
@@ -52,7 +50,7 @@ offset_top = 20.0
 offset_bottom = 80.0
 grow_horizontal = 2
 
-[node name="PlayerCapsule" type="PanelContainer" parent="UILayer/TopBar"]
+[node name="PlayerCapsule" type="PanelContainer" parent="UILayer/TopBar" unique_id=453481042]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
@@ -64,23 +62,29 @@ offset_bottom = 20.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Capsule")
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/TopBar/PlayerCapsule"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/TopBar/PlayerCapsule" unique_id=352960145]
 layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox"]
+[node name="AvatarRect" type="TextureRect" parent="UILayer/TopBar/PlayerCapsule/VBox"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+expand_mode = 3
+stretch_mode = 6
+
+[node name="Label" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox" unique_id=2059627337]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "Player"
 horizontal_alignment = 1
 
-[node name="Coords" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox"]
+[node name="Coords" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox" unique_id=1696415584]
 layout_mode = 2
 theme_override_font_sizes/font_size = 9
 text = "(0,0,0)"
 horizontal_alignment = 1
 
-[node name="LevelCapsule" type="PanelContainer" parent="UILayer/TopBar"]
+[node name="LevelCapsule" type="PanelContainer" parent="UILayer/TopBar" unique_id=1782546587]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -95,14 +99,13 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Capsule")
 
-[node name="Label" type="Label" parent="UILayer/TopBar/LevelCapsule"]
+[node name="Label" type="Label" parent="UILayer/TopBar/LevelCapsule" unique_id=842663356]
 layout_mode = 2
-theme_override_constants/letter_spacing = 2
 theme_override_font_sizes/font_size = 18
 text = "LEVEL NAME"
 horizontal_alignment = 1
 
-[node name="TimeCapsule" type="PanelContainer" parent="UILayer/TopBar"]
+[node name="TimeCapsule" type="PanelContainer" parent="UILayer/TopBar" unique_id=1080933966]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
@@ -117,23 +120,17 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Capsule")
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/TopBar/TimeCapsule"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/TopBar/TimeCapsule" unique_id=2096113756]
 layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UILayer/TopBar/TimeCapsule/VBox"]
+[node name="Label" type="Label" parent="UILayer/TopBar/TimeCapsule/VBox" unique_id=238282341]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 text = "12:00:00"
 horizontal_alignment = 1
 
-[node name="FPS" type="Label" parent="UILayer/TopBar/TimeCapsule/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 9
-text = "FPS: 60"
-horizontal_alignment = 1
-
-[node name="BottomBar" type="Control" parent="UILayer"]
+[node name="BottomBar" type="Control" parent="UILayer" unique_id=845617700]
 layout_mode = 3
 anchors_preset = 12
 anchor_top = 1.0
@@ -143,9 +140,9 @@ offset_bottom = -30.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="BackBtn" type="Button" parent="UILayer/BottomBar"]
+[node name="BackBtn" type="Button" parent="UILayer/BottomBar" unique_id=39302027]
 layout_mode = 1
-anchors_preset = 4
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 30.0
@@ -156,7 +153,7 @@ grow_vertical = 0
 theme_override_styles/normal = SubResource("StyleBoxFlat_Capsule")
 text = "← 返回"
 
-[node name="DataCards" type="HBoxContainer" parent="UILayer/BottomBar"]
+[node name="DataCards" type="HBoxContainer" parent="UILayer/BottomBar" unique_id=675374603]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -172,90 +169,73 @@ grow_vertical = 0
 theme_override_constants/separation = 15
 alignment = 1
 
-[node name="StatusCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards"]
+[node name="DiamondCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards" unique_id=729875759]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Card")
 
-[node name="Value" type="Label" parent="UILayer/BottomBar/DataCards/StatusCard"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 14
-text = "DIED"
-horizontal_alignment = 1
-
-[node name="DiamondCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards"]
-custom_minimum_size = Vector2(100, 0)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_Card")
-
-[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/DiamondCard"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/DiamondCard" unique_id=2142373818]
 layout_mode = 2
 alignment = 1
 
-[node name="Label" type="Label" parent="UILayer/BottomBar/DataCards/DiamondCard/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 10
-text = "DIAMONDS"
-horizontal_alignment = 1
-
-[node name="Value" type="Label" parent="UILayer/BottomBar/DataCards/DiamondCard/VBox"]
+[node name="Value" type="Label" parent="UILayer/BottomBar/DataCards/DiamondCard/VBox" unique_id=730194721]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "0/10"
 horizontal_alignment = 1
 
-[node name="CrownCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards"]
+[node name="CrownCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards" unique_id=1326871673]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Card")
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/CrownCard"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/CrownCard" unique_id=1946397058]
 layout_mode = 2
 alignment = 1
 
-[node name="HBox" type="HBoxContainer" parent="UILayer/BottomBar/DataCards/CrownCard/VBox"]
+[node name="HBox" type="HBoxContainer" parent="UILayer/BottomBar/DataCards/CrownCard/VBox" unique_id=313513647]
 layout_mode = 2
 alignment = 1
 
-[node name="C1" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox"]
+[node name="C1" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox" unique_id=809885809]
 custom_minimum_size = Vector2(20, 10)
 layout_mode = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="C2" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox"]
+[node name="C2" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox" unique_id=1951182632]
 custom_minimum_size = Vector2(20, 10)
 layout_mode = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="C3" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox"]
+[node name="C3" type="ColorRect" parent="UILayer/BottomBar/DataCards/CrownCard/VBox/HBox" unique_id=1636419887]
 custom_minimum_size = Vector2(20, 10)
 layout_mode = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="ProgressCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards"]
+[node name="ProgressCard" type="PanelContainer" parent="UILayer/BottomBar/DataCards" unique_id=1262576417]
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Card")
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/ProgressCard"]
+[node name="VBox" type="VBoxContainer" parent="UILayer/BottomBar/DataCards/ProgressCard" unique_id=865808406]
 layout_mode = 2
 alignment = 1
 
-[node name="Value" type="Label" parent="UILayer/BottomBar/DataCards/ProgressCard/VBox"]
+[node name="Value" type="Label" parent="UILayer/BottomBar/DataCards/ProgressCard/VBox" unique_id=1548181169]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0%"
 horizontal_alignment = 1
 
-[node name="Detail" type="Label" parent="UILayer/BottomBar/DataCards/ProgressCard/VBox"]
+[node name="Detail" type="Label" parent="UILayer/BottomBar/DataCards/ProgressCard/VBox" unique_id=58731890]
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "0.0s / 0.0s"
 horizontal_alignment = 1
 
-[node name="RetryBtn" type="Button" parent="UILayer/BottomBar"]
+[node name="RetryBtn" type="Button" parent="UILayer/BottomBar" unique_id=1802775781]
 layout_mode = 1
-anchors_preset = 6
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0

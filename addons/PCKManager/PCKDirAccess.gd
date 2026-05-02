@@ -43,15 +43,18 @@ func get_buffer(filename: String) -> PackedByteArray:
 	
 	if file.get_32() != 0x43504447: #magic
 		printerr("%s is not a valid PCK file" % file.get_path_absolute())
-		return []
+		return PackedByteArray()
 	
 	var version = file.get_32()
 	
 	if !pck_get_file_impl.has(version):
 		printerr("%s has an unsupported version %s" % [file.get_path_absolute(), version])
-		return []
+		return PackedByteArray()
 	
-	return pck_get_file_impl[version].call(filename)
+	var result = pck_get_file_impl[version].call(filename)
+	if result == null:
+		return PackedByteArray()
+	return result
 
 func _pck_get_file_v2(filename: String):
 	var major = file.get_32()

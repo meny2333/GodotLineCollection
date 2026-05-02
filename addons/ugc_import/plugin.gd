@@ -45,6 +45,18 @@ var cover_texture: TextureRect
 var music_label: Label
 ## 编辑对话框中的保存ID输入框
 var save_id_input: LineEdit
+## 编辑对话框中的作者输入框
+var edit_author_input: LineEdit
+## 编辑对话框中的描述输入框
+var edit_description_input: LineEdit
+## 音乐开始时间输入框
+var music_start_input: SpinBox
+## 音乐持续时长输入框
+var music_duration_input: SpinBox
+## 音乐淡入时长输入框
+var music_fade_in_input: SpinBox
+## 音乐淡出时长输入框
+var music_fade_out_input: SpinBox
 ## 当前正在编辑的关卡数据
 var current_editing_level: MenuLevelData
 ## 封面文件选择对话框
@@ -74,12 +86,12 @@ func _enter_tree() -> void:
 
 	import_dialog = ConfirmationDialog.new()
 	import_dialog.title = "UGC关卡管理"
-	import_dialog.size = Vector2i(700, 450)
+	import_dialog.size = Vector2i(550, 380)
 	import_dialog.ok_button_text = "导入"
 	import_dialog.confirmed.connect(_on_import_confirmed)
 
 	var tab_container := TabContainer.new()
-	tab_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# tab_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)  # 移除强制填满
 
 	var import_tab := _create_import_tab()
 	tab_container.add_child(import_tab)
@@ -110,13 +122,13 @@ func _enter_tree() -> void:
 	# 创建编辑对话框
 	edit_dialog = ConfirmationDialog.new()
 	edit_dialog.title = "编辑关卡信息"
-	edit_dialog.size = Vector2i(450, 400)
+	edit_dialog.size = Vector2i(400, 500)
 	edit_dialog.ok_button_text = "保存"
 	edit_dialog.cancel_button_text = "取消"
 	edit_dialog.confirmed.connect(_on_edit_confirmed)
 
 	var edit_vbox := VBoxContainer.new()
-	edit_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# edit_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)  # 移除强制填满
 
 	# 标题
 	var title_label := Label.new()
@@ -133,7 +145,7 @@ func _enter_tree() -> void:
 
 	var cover_hbox := HBoxContainer.new()
 	cover_texture = TextureRect.new()
-	cover_texture.custom_minimum_size = Vector2(100, 100)
+	# cover_texture.custom_minimum_size = Vector2(100, 100)  # 自适应大小
 	cover_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	cover_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	cover_hbox.add_child(cover_texture)
@@ -168,6 +180,79 @@ func _enter_tree() -> void:
 	save_id_input = LineEdit.new()
 	edit_vbox.add_child(save_id_input)
 
+	# 作者
+	var author_label := Label.new()
+	author_label.text = "作者："
+	edit_vbox.add_child(author_label)
+
+	edit_author_input = LineEdit.new()
+	edit_vbox.add_child(edit_author_input)
+
+	# 描述
+	var description_label := Label.new()
+	description_label.text = "描述："
+	edit_vbox.add_child(description_label)
+
+	edit_description_input = LineEdit.new()
+	edit_vbox.add_child(edit_description_input)
+
+	# 音乐时段设置
+	var music_section_label := Label.new()
+	music_section_label.text = "音乐时段设置："
+	edit_vbox.add_child(music_section_label)
+
+	var music_grid := GridContainer.new()
+	music_grid.columns = 2
+
+	# 开始时间
+	var start_label := Label.new()
+	start_label.text = "开始时间(秒)："
+	music_grid.add_child(start_label)
+
+	music_start_input = SpinBox.new()
+	music_start_input.min_value = 0
+	music_start_input.max_value = 9999
+	music_start_input.step = 0.1
+	music_grid.add_child(music_start_input)
+
+	# 持续时长
+	var duration_label := Label.new()
+	duration_label.text = "持续时长(秒)："
+	music_grid.add_child(duration_label)
+
+	music_duration_input = SpinBox.new()
+	music_duration_input.min_value = 0
+	music_duration_input.max_value = 9999
+	music_duration_input.step = 0.1
+	music_duration_input.tooltip_text = "0表示播放到结尾"
+	music_grid.add_child(music_duration_input)
+
+	# 淡入时长
+	var fade_in_label := Label.new()
+	fade_in_label.text = "淡入时长(秒)："
+	music_grid.add_child(fade_in_label)
+
+	music_fade_in_input = SpinBox.new()
+	music_fade_in_input.min_value = 0
+	music_fade_in_input.max_value = 10
+	music_fade_in_input.step = 0.1
+	music_fade_in_input.value = 1.0
+	music_grid.add_child(music_fade_in_input)
+
+	# 淡出时长
+	var fade_out_label := Label.new()
+	fade_out_label.text = "淡出时长(秒)："
+	music_grid.add_child(fade_out_label)
+
+	music_fade_out_input = SpinBox.new()
+	music_fade_out_input.min_value = 0
+	music_fade_out_input.max_value = 10
+	music_fade_out_input.step = 0.1
+	music_fade_out_input.value = 1.0
+	music_grid.add_child(music_fade_out_input)
+
+	edit_vbox.add_child(music_grid)
+
 	edit_dialog.add_child(edit_vbox)
 	add_child(edit_dialog)
 
@@ -201,13 +286,14 @@ func _enter_tree() -> void:
 func _create_import_tab() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ImportTab"
+	vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	var header := Label.new()
 	header.text = "选择 .pck 文件进行验证和导入："
 	vbox.add_child(header)
 
 	pck_list = ItemList.new()
-	pck_list.custom_minimum_size = Vector2(0, 200)
+	pck_list.custom_minimum_size = Vector2(500, 250)
 	pck_list.select_mode = ItemList.SELECT_MULTI
 	vbox.add_child(pck_list)
 
@@ -241,13 +327,14 @@ func _create_import_tab() -> Control:
 func _create_manage_tab() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ManageTab"
+	vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 
 	var header := Label.new()
 	header.text = "已导入的关卡列表："
 	vbox.add_child(header)
 
 	manage_list = ItemList.new()
-	manage_list.custom_minimum_size = Vector2(0, 200)
+	manage_list.custom_minimum_size = Vector2(500, 250)
 	manage_list.select_mode = ItemList.SELECT_MULTI
 	vbox.add_child(manage_list)
 
@@ -454,12 +541,16 @@ func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 
 	var tres_path := _find_tres_in_dir(paths, best_dir)
 	var save_id_str := ""
+	var author_str := ""
 	if not tres_path.is_empty():
 		save_id_str = _extract_save_id(pck_dir, tres_path)
+		author_str = _extract_authors(pck_dir, tres_path)
 
 	var info: Dictionary = {"name": best_dir, "scene_path": best_scene_path}
 	if not save_id_str.is_empty():
 		info["save_id"] = save_id_str
+	if not author_str.is_empty():
+		info["author"] = author_str
 	return info
 
 
@@ -490,6 +581,53 @@ func _extract_save_id(pck_dir: RefCounted, tres_path: String) -> String:
 				var val := trimmed.substr(eq_idx + 1).strip_edges()
 				return val
 	return ""
+
+## 从tres文件中提取authors（Array[AuthorInfo]格式）
+func _extract_authors(pck_dir: RefCounted, tres_path: String) -> String:
+	var raw: PackedByteArray = pck_dir.get_buffer(tres_path)
+	if raw.is_empty():
+		return ""
+	var text: String = raw.get_string_from_utf8()
+	var lines := text.split("\n")
+	
+	# 查找 authors = Array[ExtResource("...")]([SubResource("..."), ...])
+	var author_sub_resource_ids: Array[String] = []
+	for line in lines:
+		var trimmed := line.strip_edges()
+		if trimmed.begins_with("authors"):
+			# 提取所有 SubResource ID
+			var regex := RegEx.new()
+			regex.compile("SubResource\\(\"([^\"]+)\"\\)")
+			var matches := regex.search_all(trimmed)
+			for match in matches:
+				author_sub_resource_ids.append(match.get_string(1))
+			break
+	
+	if author_sub_resource_ids.is_empty():
+		return ""
+	
+	# 查找每个 SubResource 的 name 字段
+	var author_names: Array[String] = []
+	for sub_id in author_sub_resource_ids:
+		var in_target := false
+		for line in lines:
+			var trimmed := line.strip_edges()
+			if trimmed.begins_with("[sub_resource") and trimmed.contains(sub_id):
+				in_target = true
+				continue
+			if in_target and trimmed.begins_with("[sub_resource"):
+				break  # 进入下一个 sub_resource，停止
+			if in_target and trimmed.begins_with("name"):
+				var eq_idx := trimmed.find("=")
+				if eq_idx >= 0:
+					var val := trimmed.substr(eq_idx + 1).strip_edges().trim_prefix("\"").trim_suffix("\"")
+					if not val.is_empty():
+						author_names.append(val)
+				break
+	
+	if author_names.is_empty():
+		return ""
+	return ", ".join(author_names)
 
 
 ## 确认导入PCK文件
@@ -534,6 +672,7 @@ func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array
 
 ## 执行PCK导入操作
 func _do_import(entries: Array[Dictionary]) -> void:
+	var pck_dir_script := load(PCK_DIR_ACCESS_PATH)
 	var count := 0
 	for entry in entries:
 		var path: String = entry["file"]
@@ -543,7 +682,9 @@ func _do_import(entries: Array[Dictionary]) -> void:
 		if err == OK:
 			count += 1
 			print("Imported PCK: ", dest)
-			_upsert_level_list(dest, entry)
+			# 提取音乐文件
+			var music_path := _extract_music_from_pck(dest, pck_dir_script)
+			_upsert_level_list(dest, entry, music_path)
 		else:
 			push_warning("Failed to import PCK: ", path, " error: ", err)
 
@@ -552,12 +693,75 @@ func _do_import(entries: Array[Dictionary]) -> void:
 	_refresh_list()
 
 
+## 从PCK中提取音乐文件
+func _extract_music_from_pck(pck_res_path: String, pck_dir_script: Script) -> String:
+	if pck_dir_script == null:
+		return ""
+
+	var pck_dir: RefCounted = pck_dir_script.new()
+	pck_dir.open(pck_res_path)
+	var paths: Array = pck_dir.get_paths()
+
+	print("[ugc_import] PCK paths: ", paths)
+
+	# 查找音频文件
+	var music_extensions := [".mp3", ".ogg", ".wav"]
+	var music_path := ""
+
+	for p in paths:
+		var p_str: String = str(p).trim_suffix(".remap")
+		for ext in music_extensions:
+			if p_str.ends_with(ext):
+				music_path = p_str
+				break
+		if not music_path.is_empty():
+			break
+
+	if music_path.is_empty():
+		pck_dir.close()
+		print("[ugc_import] No music file found in PCK")
+		return ""
+
+	print("[ugc_import] Found music file: ", music_path)
+
+	# 提取音频文件
+	var audio_data = pck_dir.get_buffer(music_path)
+	pck_dir.close()
+
+	# 检查返回值是否为null或空
+	if audio_data == null:
+		print("[ugc_import] get_buffer returned null for: ", music_path)
+		return ""
+
+	if audio_data is PackedByteArray and audio_data.is_empty():
+		print("[ugc_import] get_buffer returned empty array for: ", music_path)
+		return ""
+
+	print("[ugc_import] Audio data size: ", audio_data.size())
+
+	# 保存到pck_levels目录
+	var file_name := music_path.get_file()
+	var dest_path := PCK_OUTPUT_DIR.path_join(file_name)
+	var global_dest := ProjectSettings.globalize_path(dest_path)
+
+	var file := FileAccess.open(global_dest, FileAccess.WRITE)
+	if file:
+		file.store_buffer(audio_data)
+		file.close()
+		print("[ugc_import] Extracted music: ", dest_path)
+		return dest_path
+
+	print("[ugc_import] Failed to write file: ", global_dest)
+	return ""
+
+
 ## 更新或插入关卡列表
-func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
+func _upsert_level_list(pck_res_path: String, entry: Dictionary, music_path: String = "") -> void:
 	var level_info: Dictionary = entry.get("level_info", {})
 	var scene_path := _extract_scene_path(pck_res_path, level_info)
 	var title: String = level_info.get("name", pck_res_path.get_file().get_basename())
 	var save_id: String = level_info.get("save_id", "")
+	var author: String = level_info.get("author", "")
 
 	var list: MenuLevelList
 	if ResourceLoader.exists(LEVEL_LIST_PATH):
@@ -565,12 +769,21 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	if list == null:
 		list = MenuLevelList.new()
 
+	# 加载音乐资源
+	var music: AudioStream = null
+	if not music_path.is_empty():
+		music = load(music_path) as AudioStream
+
 	for data in list.levels:
 		if data.pck_path == pck_res_path:
 			data.title = title
 			data.scene_path = scene_path
 			if not save_id.is_empty():
 				data.save_id = save_id
+			if not author.is_empty():
+				data.author = author
+			if music != null:
+				data.music = music
 			ResourceSaver.save(list, LEVEL_LIST_PATH)
 			return
 
@@ -579,6 +792,9 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	data.pck_path = pck_res_path
 	data.scene_path = scene_path
 	data.save_id = save_id
+	data.author = author
+	if music != null:
+		data.music = music
 	list.levels.append(data)
 	ResourceSaver.save(list, LEVEL_LIST_PATH)
 
@@ -759,6 +975,14 @@ func _on_edit_confirmed() -> void:
 	current_editing_level.title = edit_title_input.text
 	current_editing_level.cover = cover_texture.texture as Texture2D
 	current_editing_level.save_id = save_id_input.text
+	current_editing_level.author = edit_author_input.text
+	current_editing_level.description = edit_description_input.text
+
+	# 保存音乐时段参数
+	current_editing_level.music_start = music_start_input.value
+	current_editing_level.music_duration = music_duration_input.value
+	current_editing_level.music_fade_in = music_fade_in_input.value
+	current_editing_level.music_fade_out = music_fade_out_input.value
 
 	var list := _load_level_list()
 	if list:
@@ -775,6 +999,15 @@ func _show_edit_dialog(level: MenuLevelData) -> void:
 	cover_texture.texture = level.cover
 	music_label.text = level.music.resource_path.get_file() if level.music else "未选择"
 	save_id_input.text = level.save_id
+	edit_author_input.text = level.author
+	edit_description_input.text = level.description
+
+	# 加载音乐时段参数
+	music_start_input.value = level.music_start
+	music_duration_input.value = level.music_duration
+	music_fade_in_input.value = level.music_fade_in
+	music_fade_out_input.value = level.music_fade_out
+
 	edit_dialog.popup_centered()
 
 ## 打开封面选择对话框

@@ -17,8 +17,13 @@ var levels: Array[MenuLevelData] = []
 var current_index: int = 0
 var loaded_pcks: Array[String] = []
 var _music_player: AudioStreamPlayer
+var _music_tween: Tween
+var _current_music_data: MenuLevelData
+var _music_loop_timer: float = 0.0
+var _is_music_fading: bool = false
 var _animating: bool = false
 var _default_avatar: ImageTexture
+var _detail_popup: AcceptDialog
 
 @onready var refresh_btn: Button = $Margin/VBox/Header/RefreshBtn
 
@@ -220,12 +225,97 @@ func _update_display() -> void:
 
 func _play_level_music(data: MenuLevelData) -> void:
 	if data == null or data.music == null:
-		_music_player.stop()
+		_fade_out_music()
+		_current_music_data = null
 		return
-	if _music_player.stream == data.music and _music_player.playing:
+	if _current_music_data == data and _music_player.playing:
 		return
+
+	_current_music_data = data
 	_music_player.stream = data.music
-	_music_player.play()
+
+	# 设置开始播放位置
+	if data.music_start > 0:
+		_music_player.play(data.music_start)
+	else:
+		_music_player.play()
+
+	# 淡入效果
+	if data.music_fade_in > 0:
+		_music_player.volume_db = -80.0
+		_fade_in_music(data.music_fade_in)
+	else:
+		_music_player.volume_db = 0.0
+
+	# 设置循环计时器
+	_setup_music_loop(data)
+
+
+## 淡入音乐
+func _fade_in_music(duration: float) -> void:
+	if _music_tween:
+		_music_tween.kill()
+	_music_tween = create_tween()
+	_music_tween.tween_property(_music_player, "volume_db", 0.0, duration)
+
+
+## 淡出音乐
+func _fade_out_music() -> void:
+	if _music_tween:
+		_music_tween.kill()
+	if _current_music_data and _current_music_data.music_fade_out > 0:
+		_is_music_fading = true
+		_music_tween = create_tween()
+		_music_tween.tween_property(_music_player, "volume_db", -80.0, _current_music_data.music_fade_out)
+		_music_tween.tween_callback(_on_music_fade_out_complete)
+	else:
+		_music_player.stop()
+		_is_music_fading = false
+
+
+## 淡出完成回调
+func _on_music_fade_out_complete() -> void:
+	_music_player.stop()
+	_is_music_fading = false
+
+
+## 设置音乐循环
+func _setup_music_loop(data: MenuLevelData) -> void:
+	_music_loop_timer = 0.0
+	if data.music_duration > 0:
+		# 使用计时器在指定时长后淡出并循环
+		var timer := get_tree().create_timer(data.music_duration - data.music_fade_out)
+		timer.timeout.connect(_on_music_segment_end)
+
+
+## 音乐片段结束时淡出并循环
+func _on_music_segment_end() -> void:
+	if _current_music_data == null:
+		return
+
+	# 淡出
+	_fade_out_music()
+
+	# 等待淡出完成后重新开始
+	await get_tree().create_timer(_current_music_data.music_fade_out).timeout
+
+	# 重新播放
+	if _current_music_data:
+		_play_level_music(_current_music_data)
+
+
+func _process(delta: float) -> void:
+	# 检查音乐是否播放到结尾（用于没有指定时长的情况）
+	if _current_music_data and _current_music_data.music_duration <= 0:
+		if _music_player.playing and not _is_music_fading:
+			# 检查是否接近结尾
+			var remaining := _music_player.stream.get_length() - _music_player.get_playback_position()
+			if remaining <= _current_music_data.music_fade_out:
+				# 淡出并循环
+				_fade_out_music()
+				await get_tree().create_timer(_current_music_data.music_fade_out).timeout
+				if _current_music_data:
+					_play_level_music(_current_music_data)
 
 
 func _on_view_toggle_pressed() -> void:
@@ -368,10 +458,55 @@ func _on_info_button() -> void:
 	if levels.is_empty():
 		return
 	var data: MenuLevelData = levels[current_index]
-	var detail := "关卡: %s" % data.title
-	if not data.pck_path.is_empty():
-		detail += "\nPCK: %s" % data.pck_path
-	info_label.text = detail
+	_show_detail_popup(data)
+
+
+func _show_detail_popup(data: MenuLevelData) -> void:
+	if _detail_popup:
+		_detail_popup.queue_free()
+
+	_detail_popup = AcceptDialog.new()
+	_detail_popup.title = "关卡详情"
+	_detail_popup.size = Vector2i(500, 300)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 16)
+
+	var cover_rect := TextureRect.new()
+	cover_rect.custom_minimum_size = Vector2(200, 200)
+	cover_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	cover_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	cover_rect.texture = data.cover
+	hbox.add_child(cover_rect)
+
+	var vbox := VBoxContainer.new()
+	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_theme_constant_override("separation", 8)
+
+	var title_label := Label.new()
+	title_label.text = data.title if data.title != "" else "未命名关卡"
+	title_label.add_theme_font_size_override("font_size", 24)
+	title_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.95))
+	vbox.add_child(title_label)
+
+	var author_label := Label.new()
+	author_label.text = "作者: %s" % data.author if not data.author.is_empty() else "作者: 未知"
+	author_label.add_theme_font_size_override("font_size", 14)
+	author_label.add_theme_color_override("font_color", Color(0.6, 0.62, 0.7, 1))
+	vbox.add_child(author_label)
+
+	var desc_label := Label.new()
+	desc_label.text = data.description if not data.description.is_empty() else "暂无描述"
+	desc_label.add_theme_font_size_override("font_size", 14)
+	desc_label.add_theme_color_override("font_color", Color(0.6, 0.62, 0.7, 1))
+	desc_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(desc_label)
+
+	hbox.add_child(vbox)
+	_detail_popup.add_child(hbox)
+	add_child(_detail_popup)
+	_detail_popup.popup_centered()
 
 
 func _on_refresh_button_pressed() -> void:

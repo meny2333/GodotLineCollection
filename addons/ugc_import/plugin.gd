@@ -11,6 +11,13 @@ var overwrite_dialog: ConfirmationDialog
 
 var pck_entries: Array[Dictionary] = []
 
+var manage_list: ItemList
+var edit_button: Button
+var delete_button: Button
+var move_up_button: Button
+var move_down_button: Button
+var edit_dialog: ConfirmationDialog
+
 const PCK_OUTPUT_DIR := "res://pck_levels"
 const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
@@ -62,6 +69,14 @@ func _enter_tree() -> void:
 	overwrite_dialog.cancel_button_text = "跳过"
 	add_child(overwrite_dialog)
 
+	# 创建编辑对话框
+	edit_dialog = ConfirmationDialog.new()
+	edit_dialog.title = "编辑关卡信息"
+	edit_dialog.size = Vector2i(400, 300)
+	edit_dialog.ok_button_text = "保存"
+	edit_dialog.confirmed.connect(_on_edit_confirmed)
+	add_child(edit_dialog)
+
 func _create_import_tab() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ImportTab"
@@ -108,6 +123,35 @@ func _create_manage_tab() -> Control:
 	var header := Label.new()
 	header.text = "已导入的关卡列表："
 	vbox.add_child(header)
+
+	manage_list = ItemList.new()
+	manage_list.custom_minimum_size = Vector2(0, 300)
+	manage_list.select_mode = ItemList.SELECT_MULTI
+	vbox.add_child(manage_list)
+
+	var btn_hbox := HBoxContainer.new()
+
+	edit_button = Button.new()
+	edit_button.text = "编辑选中"
+	edit_button.pressed.connect(_on_edit_selected)
+	btn_hbox.add_child(edit_button)
+
+	delete_button = Button.new()
+	delete_button.text = "删除选中"
+	delete_button.pressed.connect(_on_delete_selected)
+	btn_hbox.add_child(delete_button)
+
+	move_up_button = Button.new()
+	move_up_button.text = "上移"
+	move_up_button.pressed.connect(_on_move_up)
+	btn_hbox.add_child(move_up_button)
+
+	move_down_button = Button.new()
+	move_down_button.text = "下移"
+	move_down_button.pressed.connect(_on_move_down)
+	btn_hbox.add_child(move_down_button)
+
+	vbox.add_child(btn_hbox)
 
 	return vbox
 
@@ -402,3 +446,19 @@ func _extract_scene_path(pck_path: String, level_info: Dictionary) -> String:
 	if not scene_path.is_empty():
 		return scene_path
 	return ""
+
+# 管理标签页函数占位符 - 将在后续任务中实现
+func _on_edit_selected() -> void:
+	pass
+
+func _on_delete_selected() -> void:
+	pass
+
+func _on_move_up() -> void:
+	pass
+
+func _on_move_down() -> void:
+	pass
+
+func _on_edit_confirmed() -> void:
+	pass

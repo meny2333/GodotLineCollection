@@ -1,44 +1,71 @@
 @tool
 extends EditorPlugin
 
+## 工具栏按钮，打开UGC管理对话框
 var import_button: Button
+## UGC管理主对话框
 var import_dialog: ConfirmationDialog
+## PCK文件列表
 var pck_list: ItemList
+## 选择PCK文件按钮
 var select_button: Button
+## 验证选中PCK按钮
 var verify_button: Button
+## 文件选择对话框
 var file_dialog: FileDialog
+## 覆盖确认对话框
 var overwrite_dialog: ConfirmationDialog
 
+## 待导入的PCK条目列表
 var pck_entries: Array[Dictionary] = []
 
+## 关卡管理列表
 var manage_list: ItemList
+## 编辑按钮
 var edit_button: Button
+## 删除按钮
 var delete_button: Button
+## 上移按钮
 var move_up_button: Button
+## 下移按钮
 var move_down_button: Button
+## 编辑对话框
 var edit_dialog: ConfirmationDialog
+## 删除确认对话框
 var delete_confirm_dialog: ConfirmationDialog
 
+## 已管理的关卡数据列表
 var managed_levels: Array[MenuLevelData] = []
 
+## 编辑对话框中的标题输入框
 var edit_title_input: LineEdit
+## 编辑对话框中的封面预览
 var cover_texture: TextureRect
+## 编辑对话框中的音乐标签
 var music_label: Label
+## 编辑对话框中的保存ID输入框
 var save_id_input: LineEdit
+## 当前正在编辑的关卡数据
 var current_editing_level: MenuLevelData
+## 封面文件选择对话框
 var cover_file_dialog: FileDialog
+## 音乐文件选择对话框
 var music_file_dialog: FileDialog
 
+## PCK输出目录
 const PCK_OUTPUT_DIR := "res://pck_levels"
+## 关卡列表资源路径
 const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
+## 验证状态枚举
 enum VerifyStatus {
-	PENDING,
-	PASSED,
-	FAILED,
-	NO_LEVEL,
+	PENDING,  ## 待验证
+	PASSED,   ## 验证通过
+	FAILED,   ## 验证失败
+	NO_LEVEL, ## 无关卡内容
 }
 
+## 插件进入场景树时初始化UI
 func _enter_tree() -> void:
 	import_button = Button.new()
 	import_button.text = "UGC管理"
@@ -170,6 +197,7 @@ func _enter_tree() -> void:
 	delete_confirm_dialog.confirmed.connect(_on_delete_confirmed)
 	add_child(delete_confirm_dialog)
 
+## 创建导入标签页
 func _create_import_tab() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ImportTab"
@@ -209,6 +237,7 @@ func _create_import_tab() -> Control:
 
 	return vbox
 
+## 创建管理标签页
 func _create_manage_tab() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.name = "ManageTab"
@@ -248,6 +277,7 @@ func _create_manage_tab() -> Control:
 
 	return vbox
 
+## 插件退出场景树时清理资源
 func _exit_tree() -> void:
 	remove_control_from_container(CONTAINER_TOOLBAR, import_button)
 	import_button.queue_free()
@@ -259,17 +289,20 @@ func _exit_tree() -> void:
 	music_file_dialog.queue_free()
 	delete_confirm_dialog.queue_free()
 
+## 打开UGC管理对话框
 func _on_import_pressed() -> void:
 	_refresh_list()
 	_refresh_manage_list()
 	import_dialog.popup_centered()
 
+## 刷新PCK文件列表显示
 func _refresh_list() -> void:
 	pck_list.clear()
 	for i in pck_entries.size():
 		var entry: Dictionary = pck_entries[i]
 		pck_list.add_item(_format_entry(entry))
 
+## 格式化PCK条目显示文本
 func _format_entry(entry: Dictionary) -> String:
 	var name: String = entry.get("file", "")
 	var status: int = entry.get("status", VerifyStatus.PENDING)
@@ -289,9 +322,11 @@ func _format_entry(entry: Dictionary) -> String:
 			detail = " - LevelData"
 	return "%s [%s]%s" % [name.get_file(), status_text, detail]
 
+## 打开文件选择对话框
 func _on_select_pressed() -> void:
 	file_dialog.popup_centered(Vector2i(800, 600))
 
+## 处理文件选择完成事件
 func _on_files_selected(paths: PackedStringArray) -> void:
 	for path in paths:
 		var already := false
@@ -306,6 +341,7 @@ func _on_files_selected(paths: PackedStringArray) -> void:
 			})
 	_refresh_list()
 
+## 移除选中的PCK条目
 func _on_remove_pressed() -> void:
 	var selected := pck_list.get_selected_items()
 	if selected.is_empty():
@@ -321,6 +357,7 @@ func _on_remove_pressed() -> void:
 
 const PCK_DIR_ACCESS_PATH := "res://addons/PCKManager/PCKDirAccess.gd"
 
+## 验证选中的PCK文件
 func _on_verify_pressed() -> void:
 	var selected := pck_list.get_selected_items()
 	if selected.is_empty():
@@ -369,6 +406,7 @@ func _on_verify_pressed() -> void:
 	_refresh_list()
 	EditorInterface.get_editor_toaster().push_toast("验证完成", EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
+## 在PCK中查找关卡数据
 func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 	var scene_dirs: Dictionary = {}
 	for p in paths:
@@ -425,6 +463,7 @@ func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 	return info
 
 
+## 在目录中查找tres文件
 func _find_tres_in_dir(paths: Array, dir_name: String) -> String:
 	for p in paths:
 		var p_str: String = str(p).trim_suffix(".remap")
@@ -437,6 +476,7 @@ func _find_tres_in_dir(paths: Array, dir_name: String) -> String:
 	return ""
 
 
+## 从tres文件中提取saveID
 func _extract_save_id(pck_dir: RefCounted, tres_path: String) -> String:
 	var raw: PackedByteArray = pck_dir.get_buffer(tres_path)
 	if raw.is_empty():
@@ -452,6 +492,7 @@ func _extract_save_id(pck_dir: RefCounted, tres_path: String) -> String:
 	return ""
 
 
+## 确认导入PCK文件
 func _on_import_confirmed() -> void:
 	var to_import: Array[Dictionary] = []
 	for entry in pck_entries:
@@ -477,6 +518,7 @@ func _on_import_confirmed() -> void:
 	else:
 		_do_import(to_import)
 
+## 处理覆盖确认
 func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array[Dictionary]) -> void:
 	var conflict_names := conflicts.map(func(e: Dictionary) -> String: return e["file"].get_file())
 	overwrite_dialog.get_label().text = "以下PCK文件已存在：\n" + "\n".join(conflict_names) + "\n\n是否覆盖？"
@@ -490,6 +532,7 @@ func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array
 	)
 	overwrite_dialog.popup_centered()
 
+## 执行PCK导入操作
 func _do_import(entries: Array[Dictionary]) -> void:
 	var count := 0
 	for entry in entries:
@@ -509,6 +552,7 @@ func _do_import(entries: Array[Dictionary]) -> void:
 	_refresh_list()
 
 
+## 更新或插入关卡列表
 func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	var level_info: Dictionary = entry.get("level_info", {})
 	var scene_path := _extract_scene_path(pck_res_path, level_info)
@@ -539,12 +583,14 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	ResourceSaver.save(list, LEVEL_LIST_PATH)
 
 
+## 提取场景路径
 func _extract_scene_path(pck_path: String, level_info: Dictionary) -> String:
 	var scene_path: String = level_info.get("scene_path", "")
 	if not scene_path.is_empty():
 		return scene_path
 	return ""
 
+## 加载关卡列表资源
 func _load_level_list() -> MenuLevelList:
 	if not ResourceLoader.exists(LEVEL_LIST_PATH):
 		return null
@@ -554,6 +600,7 @@ func _load_level_list() -> MenuLevelList:
 	push_warning("Failed to load level list: invalid resource type")
 	return null
 
+## 保存关卡列表资源
 func _save_level_list(list: MenuLevelList) -> void:
 	if list == null:
 		push_error("Cannot save null level list")
@@ -563,6 +610,7 @@ func _save_level_list(list: MenuLevelList) -> void:
 		push_error("Failed to save level list: ", err)
 		EditorInterface.get_editor_toaster().push_toast("保存失败", EditorInterface.get_editor_toaster().SEVERITY_ERROR)
 
+## 刷新关卡管理列表显示
 func _refresh_manage_list() -> void:
 	manage_list.clear()
 	managed_levels.clear()
@@ -580,6 +628,7 @@ func _refresh_manage_list() -> void:
 			display_text += " (%s)" % level.pck_path.get_file()
 		manage_list.add_item(display_text)
 
+## 打开编辑选中关卡对话框
 func _on_edit_selected() -> void:
 	var selected := manage_list.get_selected_items()
 	if selected.is_empty():
@@ -596,6 +645,7 @@ func _on_edit_selected() -> void:
 	current_editing_level = managed_levels[idx]
 	_show_edit_dialog(current_editing_level)
 
+## 删除选中关卡
 func _on_delete_selected() -> void:
 	var selected := manage_list.get_selected_items()
 	if selected.is_empty():
@@ -610,6 +660,7 @@ func _on_delete_selected() -> void:
 	delete_confirm_dialog.get_label().text = "确定要删除以下关卡吗？\n" + "\n".join(names) + "\n\n这将同时删除PCK文件和关卡数据。"
 	delete_confirm_dialog.popup_centered()
 
+## 确认删除关卡
 func _on_delete_confirmed() -> void:
 	var selected := manage_list.get_selected_items()
 	if selected.is_empty():
@@ -650,6 +701,7 @@ func _on_delete_confirmed() -> void:
 	else:
 		EditorInterface.get_editor_toaster().push_toast("已删除 %d 个关卡" % deleted_count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
+## 上移选中关卡
 func _on_move_up() -> void:
 	var selected := manage_list.get_selected_items()
 	if selected.is_empty():
@@ -674,6 +726,7 @@ func _on_move_up() -> void:
 	_refresh_manage_list()
 	manage_list.select(idx - 1)
 
+## 下移选中关卡
 func _on_move_down() -> void:
 	var selected := manage_list.get_selected_items()
 	if selected.is_empty():
@@ -698,6 +751,7 @@ func _on_move_down() -> void:
 	_refresh_manage_list()
 	manage_list.select(idx + 1)
 
+## 确认编辑关卡信息
 func _on_edit_confirmed() -> void:
 	if current_editing_level == null:
 		return
@@ -715,6 +769,7 @@ func _on_edit_confirmed() -> void:
 
 	EditorInterface.get_editor_toaster().push_toast("关卡信息已保存", EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
+## 显示编辑对话框
 func _show_edit_dialog(level: MenuLevelData) -> void:
 	edit_title_input.text = level.title
 	cover_texture.texture = level.cover
@@ -722,17 +777,21 @@ func _show_edit_dialog(level: MenuLevelData) -> void:
 	save_id_input.text = level.save_id
 	edit_dialog.popup_centered()
 
+## 打开封面选择对话框
 func _on_select_cover() -> void:
 	cover_file_dialog.popup_centered(Vector2i(800, 600))
 
+## 处理封面图片选择
 func _on_cover_selected(path: String) -> void:
 	var texture := load(path) as Texture2D
 	if texture:
 		cover_texture.texture = texture
 
+## 打开音乐选择对话框
 func _on_select_music() -> void:
 	music_file_dialog.popup_centered(Vector2i(800, 600))
 
+## 处理音乐文件选择
 func _on_music_selected(path: String) -> void:
 	var audio := load(path) as AudioStream
 	if audio:

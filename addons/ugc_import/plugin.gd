@@ -12,6 +12,7 @@ var overwrite_dialog: ConfirmationDialog
 var pck_entries: Array[Dictionary] = []
 
 const PCK_OUTPUT_DIR := "res://pck_levels"
+const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
 enum VerifyStatus {
 	PENDING,
@@ -113,6 +114,7 @@ func _create_manage_tab() -> Control:
 func _exit_tree() -> void:
 	remove_control_from_container(CONTAINER_TOOLBAR, import_button)
 	import_button.queue_free()
+	import_dialog.queue_free()
 	file_dialog.queue_free()
 	overwrite_dialog.queue_free()
 
@@ -345,8 +347,6 @@ func _import_with_overwrite_check(to_import: Array[Dictionary], conflicts: Array
 		Object.CONNECT_ONE_SHOT
 	)
 	overwrite_dialog.popup_centered()
-
-const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
 func _do_import(entries: Array[Dictionary]) -> void:
 	var count := 0

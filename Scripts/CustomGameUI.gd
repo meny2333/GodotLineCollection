@@ -8,6 +8,8 @@ extends Control
 var _was_dead: bool = false
 var _shown: bool = false
 var _cloud_saved: bool = false
+var _revive_shown: bool = false
+var _revive_declined: bool = false
 
 # --- 节点引用 ---
 @onready var ui_layer = $UILayer
@@ -27,6 +29,13 @@ var _cloud_saved: bool = false
 @onready var retry_btn = $UILayer/BottomBar/RetryBtn
 @onready var back_btn = $UILayer/BottomBar/BackBtn
 
+# ReviveLayer
+@onready var revive_layer: CanvasLayer = $ReviveLayer
+@onready var revive_btn: Button = $ReviveLayer/RevivePanel/TopBar/ReviveBtn
+@onready var revive_back_btn: Button = $ReviveLayer/RevivePanel/TopBar/BackBtn
+@onready var revive_progress_bar: ProgressBar = $ReviveLayer/RevivePanel/ProgressContainer/ProgressBar
+@onready var revive_percent_label: Label = $ReviveLayer/RevivePanel/ProgressContainer/ProgressBar/PercentLabel
+
 func _ready() -> void:
 	retry_btn.pressed.connect(_on_revive_pressed)
 	back_btn.pressed.connect(_on_back_pressed)
@@ -36,21 +45,43 @@ func _ready() -> void:
 	UserManager.user_info_updated.connect(_on_user_info_updated)
 	
 	_apply_circle_avatar(avatar_rect)
+	
+	# 复活 UI 初始化
+	revive_btn.pressed.connect(_on_revive_btn_pressed)
+	revive_back_btn.pressed.connect(_on_revive_back_pressed)
+	revive_layer.visible = false
 
 func _process(_delta: float) -> void:
 	var current_state = LevelManager.GameState
 	var is_dead = (current_state == LevelManager.GameStatus.Died)
 	
-	if is_dead and not _was_dead:
-		_show_revive()
+	# 复活 UI：死亡 + 有检查点 + 未拒绝复活
+	var can_revive = is_dead and LevelManager.current_checkpoint != null and not _revive_declined
 	
-	if not is_dead and _was_dead:
-		_hide_revive()
+	if can_revive and not _revive_shown:
+		_show_revive_ui()
+	elif not is_dead and _revive_shown:
+		# 复活成功后，隐藏复活 UI
+		_hide_revive_ui_silent()
+	
+	# 更新进度条
+	if _revive_shown:
+		_update_revive_progress()
+	
+	# 原有逻辑：显示游戏 UI 时更新数据
+	if not _revive_shown:
+		if is_dead and not _was_dead:
+			_show_revive()
+		if not is_dead and _was_dead:
+			_hide_revive()
+		if _shown:
+			_update_ui_data()
 	
 	_was_dead = is_dead
 	
-	if _shown:
-		_update_ui_data()
+	# 玩家复活后重置拒绝标志
+	if not is_dead and _revive_declined:
+		_revive_declined = false
 
 func _show_revive() -> void:
 	if _shown: return
@@ -65,6 +96,23 @@ func _hide_revive() -> void:
 	_shown = false
 	ui_layer.visible = false
 
+func _show_revive_ui() -> void:
+	_revive_shown = true
+	revive_layer.visible = true
+	ui_layer.visible = false
+	_update_revive_progress()
+
+func _hide_revive_ui_silent() -> void:
+	_revive_shown = false
+	revive_layer.visible = false
+
+func _hide_revive_ui_show_game() -> void:
+	_revive_shown = false
+	revive_layer.visible = false
+	ui_layer.visible = true
+	_update_ui_data()
+	_save_progress()
+
 func _save_progress() -> void:
 	var p = Player.instance
 	if not p or not p.level_data:
@@ -74,7 +122,6 @@ func _save_progress() -> void:
 	print("[CustomGameUI] saving progress: save_id=%d crown=%d percent=%d diamond=%d" % [save_id, LevelManager.crown, LevelManager.percent, LevelManager.diamond])
 	ProgressStore.update_level(str(save_id), LevelManager.crown, LevelManager.percent, LevelManager.diamond)
 	CloudArchiveService.queue_save("game_progress")
-	CloudArchiveService.save_completed.connect(_on_cloud_saved, CONNECT_ONE_SHOT)
 
 func _on_cloud_saved(update_time: String) -> void:
 	if not update_time.is_empty():
@@ -154,6 +201,24 @@ func _on_user_info_updated() -> void:
 	if _shown:
 		_update_user_display()
 
+func _update_revive_progress() -> void:
+	var percent: int = LevelManager.percent
+	if percent == 0:
+		var p = Player.instance
+		if p:
+			var music_player = p.get_node_or_null("MusicPlayer") as AudioStreamPlayer
+			if music_player and music_player.stream:
+				var total_sec: float = p.level_data.levelTotalTime if p.level_data.useCustomLevelTime else music_player.stream.get_length()
+				var current_sec: float = music_player.get_playback_position()
+				if total_sec > 0:
+					percent = int((current_sec / total_sec) * 100)
+	revive_percent_label.text = "%d%%" % percent
+	revive_progress_bar.value = percent
+	# 更新标签大小以匹配进度条填充区域
+	var bar_size: Vector2 = revive_progress_bar.size
+	var fill_ratio: float = percent / 100.0
+	revive_percent_label.size = Vector2(bar_size.x * fill_ratio, bar_size.y)
+
 
 func _apply_circle_avatar(rect: TextureRect) -> void:
 	var shader: Shader = load("res://Scripts/circle_avatar.gdshader")
@@ -173,16 +238,19 @@ func _update_user_display() -> void:
 
 
 # --- 按钮逻辑 ---
-func _on_revive_pressed() -> void:
-	_hide_revive()
-	if Player.instance.is_end:
-		_on_gamereplay_pressed()
-	elif LevelManager.current_checkpoint:
+func _on_revive_btn_pressed() -> void:
+	if LevelManager.current_checkpoint:
 		LevelManager.current_checkpoint.revive()
 		if LevelManager.crown > 0:
 			LevelManager.is_relive = true
-	else:
-		_on_gamereplay_pressed()
+
+func _on_revive_back_pressed() -> void:
+	_revive_declined = true
+	_hide_revive_ui_show_game()
+
+func _on_revive_pressed() -> void:
+	_hide_revive()
+	get_tree().reload_current_scene()
 
 func _on_back_pressed() -> void:
 	LevelManager.is_end = false

@@ -14,7 +14,7 @@ func post(url: String, body: Dictionary, type: int = -1) -> Dictionary:
 	
 	var http: HTTPRequest = HTTPRequest.new()
 	Engine.get_main_loop().root.add_child.call_deferred(http)
-	await Engine.get_main_loop().process_frame
+	await http.tree_entered
 	
 	var headers: PackedStringArray = ["Content-Type: application/json"]
 	var start_time: float = Time.get_ticks_msec()
@@ -57,7 +57,7 @@ func http_get(url: String) -> Dictionary:
 	
 	var http: HTTPRequest = HTTPRequest.new()
 	Engine.get_main_loop().root.add_child.call_deferred(http)
-	await Engine.get_main_loop().process_frame
+	await http.tree_entered
 	
 	var start_time: float = Time.get_ticks_msec()
 	var error: Error = http.request(full_url, [], HTTPClient.METHOD_GET)

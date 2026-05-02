@@ -30,6 +30,21 @@ corner_radius_bottom_left = 12
 shadow_color = Color(0, 0, 0, 0.3)
 shadow_size = 4
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_RevivePanel"]
+bg_color = Color(0, 0, 0, 0.5)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ReviveButton"]
+bg_color = Color(0, 0, 0, 0.6)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.3)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [node name="CustomGameUI" type="Control" unique_id=39720665]
 layout_mode = 3
 anchors_preset = 15
@@ -236,3 +251,64 @@ grow_horizontal = 0
 grow_vertical = 0
 theme_override_styles/normal = SubResource("StyleBoxFlat_Capsule")
 text = "▶ 重试"
+
+[node name="ReviveLayer" type="CanvasLayer" parent="." unique_id=2000000001]
+layer = 101
+
+[node name="RevivePanel" type="PanelContainer" parent="ReviveLayer" unique_id=2000000002]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_RevivePanel")
+
+[node name="TopBar" type="Control" parent="ReviveLayer/RevivePanel" unique_id=2000000003]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+
+[node name="BackBtn" type="Button" parent="ReviveLayer/RevivePanel/TopBar" unique_id=2000000004]
+layout_mode = 1
+offset_left = 20.0
+offset_top = 10.0
+offset_right = 140.0
+offset_bottom = 50.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_ReviveButton")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ReviveButton")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ReviveButton")
+text = "← 返回"
+
+[node name="ReviveBtn" type="Button" parent="ReviveLayer/RevivePanel/TopBar" unique_id=2000000005]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -140.0
+offset_top = 10.0
+offset_right = -20.0
+offset_bottom = 50.0
+grow_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_styles/normal = SubResource("StyleBoxFlat_ReviveButton")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_ReviveButton")
+theme_override_styles/hover = SubResource("StyleBoxFlat_ReviveButton")
+text = "复活"
+
+[node name="ProgressContainer" type="VBoxContainer" parent="ReviveLayer/RevivePanel" unique_id=2000000006]
+layout_mode = 2
+mouse_filter = 2
+alignment = 2
+
+[node name="ProgressBar" type="ProgressBar" parent="ReviveLayer/RevivePanel/ProgressContainer" unique_id=2000000008]
+custom_minimum_size = Vector2(300, 40)
+layout_mode = 2
+show_percentage = false
+
+[node name="PercentLabel" type="Label" parent="ReviveLayer/RevivePanel/ProgressContainer/ProgressBar" unique_id=2000000007]
+layout_mode = 0
+theme_override_font_sizes/font_size = 20
+text = "0%"
+horizontal_alignment = 2
+vertical_alignment = 1
+clip_text = true

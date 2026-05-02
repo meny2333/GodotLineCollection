@@ -62,27 +62,15 @@ offset_bottom = 20.0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_Capsule")
 
-[node name="VBox" type="VBoxContainer" parent="UILayer/TopBar/PlayerCapsule" unique_id=352960145]
+[node name="VBox" type="HBoxContainer" parent="UILayer/TopBar/PlayerCapsule" unique_id=1628577024]
 layout_mode = 2
-alignment = 1
 
-[node name="AvatarRect" type="TextureRect" parent="UILayer/TopBar/PlayerCapsule/VBox"]
-custom_minimum_size = Vector2(24, 24)
+[node name="AvatarRect" type="TextureRect" parent="UILayer/TopBar/PlayerCapsule/VBox" unique_id=603563696]
 layout_mode = 2
-expand_mode = 3
-stretch_mode = 6
 
 [node name="Label" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox" unique_id=2059627337]
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
 text = "Player"
-horizontal_alignment = 1
-
-[node name="Coords" type="Label" parent="UILayer/TopBar/PlayerCapsule/VBox" unique_id=1696415584]
-layout_mode = 2
-theme_override_font_sizes/font_size = 9
-text = "(0,0,0)"
-horizontal_alignment = 1
 
 [node name="LevelCapsule" type="PanelContainer" parent="UILayer/TopBar" unique_id=1782546587]
 layout_mode = 1

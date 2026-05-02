@@ -15,7 +15,6 @@ var _shown: bool = false
 @onready var level_label = $UILayer/TopBar/LevelCapsule/Label
 @onready var player_label = $UILayer/TopBar/PlayerCapsule/VBox/Label
 @onready var avatar_rect: TextureRect = $UILayer/TopBar/PlayerCapsule/VBox/AvatarRect
-@onready var coords_label = $UILayer/TopBar/PlayerCapsule/VBox/Coords
 @onready var time_label = $UILayer/TopBar/TimeCapsule/VBox/Label
 
 # BottomBar
@@ -69,7 +68,6 @@ func _update_ui_data() -> void:
 		level_label.text = p.level_data.levelTitle
 	
 	_update_user_display()
-	coords_label.text = "(%.1f, %.1f, %.1f)" % [p.global_position.x, p.global_position.y, p.global_position.z]
 	
 	var time = Time.get_datetime_dict_from_system()
 	time_label.text = "%02d:%02d:%02d" % [time.hour, time.minute, time.second]

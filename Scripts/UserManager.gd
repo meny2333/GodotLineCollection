@@ -33,16 +33,21 @@ func _load_avatar(url: String) -> void:
 	
 	if result_code == 200 and body.size() > 0:
 		var image := Image.new()
-		var load_err := image.load_png_from_buffer(body)
-		if load_err != OK:
-			load_err = image.load_jpg_from_buffer(body)
-			if load_err != OK:
-				http.queue_free()
-				user_info_updated.emit()
-				return
+		var ext: String = url.get_extension().to_lower()
+		var load_err: int
 		
-		image.resize(64, 64)
-		user_avatar_texture = ImageTexture.create_from_image(image)
+		if ext == "png":
+			load_err = image.load_png_from_buffer(body)
+		elif ext == "jpg" or ext == "jpeg":
+			load_err = image.load_jpg_from_buffer(body)
+		elif ext == "webp":
+			load_err = image.load_webp_from_buffer(body)
+		else:
+			load_err = image.load_jpg_from_buffer(body)
+		
+		if load_err == OK:
+			image.resize(64, 64)
+			user_avatar_texture = ImageTexture.create_from_image(image)
 	
 	http.queue_free()
 	user_info_updated.emit()

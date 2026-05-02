@@ -18,6 +18,8 @@ var move_up_button: Button
 var move_down_button: Button
 var edit_dialog: ConfirmationDialog
 
+var managed_levels: Array[MenuLevelData] = []
+
 const PCK_OUTPUT_DIR := "res://pck_levels"
 const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
@@ -164,6 +166,7 @@ func _exit_tree() -> void:
 
 func _on_import_pressed() -> void:
 	_refresh_list()
+	_refresh_manage_list()
 	import_dialog.popup_centered()
 
 func _refresh_list() -> void:
@@ -446,6 +449,36 @@ func _extract_scene_path(pck_path: String, level_info: Dictionary) -> String:
 	if not scene_path.is_empty():
 		return scene_path
 	return ""
+
+func _load_level_list() -> MenuLevelList:
+	if not ResourceLoader.exists(LEVEL_LIST_PATH):
+		return null
+	var list = load(LEVEL_LIST_PATH)
+	if list is MenuLevelList:
+		return list
+	return null
+
+func _save_level_list(list: MenuLevelList) -> void:
+	var err := ResourceSaver.save(list, LEVEL_LIST_PATH)
+	if err != OK:
+		push_error("Failed to save level list: ", err)
+
+func _refresh_manage_list() -> void:
+	manage_list.clear()
+	managed_levels.clear()
+
+	var list := _load_level_list()
+	if list == null:
+		return
+
+	managed_levels = list.levels.duplicate()
+
+	for i in range(managed_levels.size()):
+		var level := managed_levels[i]
+		var display_text := "%d. %s" % [i + 1, level.title if level.title != "" else "未命名关卡"]
+		if not level.pck_path.is_empty():
+			display_text += " (%s)" % level.pck_path.get_file()
+		manage_list.add_item(display_text)
 
 # 管理标签页函数占位符 - 将在后续任务中实现
 func _on_edit_selected() -> void:

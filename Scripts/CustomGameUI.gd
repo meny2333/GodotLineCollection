@@ -7,6 +7,7 @@ extends Control
 # --- 状态 ---
 var _was_dead: bool = false
 var _shown: bool = false
+var _cloud_saved: bool = false
 
 # --- 节点引用 ---
 @onready var ui_layer = $UILayer
@@ -33,6 +34,8 @@ func _ready() -> void:
 	set_process(true)
 	
 	UserManager.user_info_updated.connect(_on_user_info_updated)
+	
+	_apply_circle_avatar(avatar_rect)
 
 func _process(_delta: float) -> void:
 	var current_state = LevelManager.GameState
@@ -52,12 +55,31 @@ func _process(_delta: float) -> void:
 func _show_revive() -> void:
 	if _shown: return
 	_shown = true
+	_cloud_saved = false
 	ui_layer.visible = true
+	time_label.text = "..."
 	_update_ui_data()
+	_save_progress()
 
 func _hide_revive() -> void:
 	_shown = false
 	ui_layer.visible = false
+
+func _save_progress() -> void:
+	var p = Player.instance
+	if not p or not p.level_data:
+		print("[CustomGameUI] save skipped: no player or level_data")
+		return
+	var save_id: int = p.level_data.saveID
+	print("[CustomGameUI] saving progress: save_id=%d crown=%d percent=%d diamond=%d" % [save_id, LevelManager.crown, LevelManager.percent, LevelManager.diamond])
+	ProgressStore.update_level(str(save_id), LevelManager.crown, LevelManager.percent, LevelManager.diamond)
+	CloudArchiveService.queue_save("game_progress")
+	CloudArchiveService.save_completed.connect(_on_cloud_saved, CONNECT_ONE_SHOT)
+
+func _on_cloud_saved(update_time: String) -> void:
+	if not update_time.is_empty():
+		_cloud_saved = true
+		time_label.text = "☁ " + update_time
 
 func _update_ui_data() -> void:
 	var p = Player.instance
@@ -68,9 +90,6 @@ func _update_ui_data() -> void:
 		level_label.text = p.level_data.levelTitle
 	
 	_update_user_display()
-	
-	var time = Time.get_datetime_dict_from_system()
-	time_label.text = "%02d:%02d:%02d" % [time.hour, time.minute, time.second]
 
 	# 2. 底部数据卡片
 	diamond_val.text = "%d/10" % LevelManager.diamond
@@ -136,6 +155,14 @@ func _on_user_info_updated() -> void:
 		_update_user_display()
 
 
+func _apply_circle_avatar(rect: TextureRect) -> void:
+	var shader: Shader = load("res://Scripts/circle_avatar.gdshader")
+	if shader:
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		rect.material = mat
+
+
 func _update_user_display() -> void:
 	player_label.text = UserManager.get_display_name()
 	if UserManager.has_avatar():
@@ -158,13 +185,13 @@ func _on_revive_pressed() -> void:
 		_on_gamereplay_pressed()
 
 func _on_back_pressed() -> void:
-	get_tree().quit()
 	LevelManager.is_end = false
 	LevelManager.is_relive = false
 	LevelManager.camera_checkpoint.restore_pending = false
 	LevelManager.diamond = 0
 	LevelManager.crown = 0
 	LevelManager.percent = 0
+	get_tree().change_scene_to_file("res://Scenes/LevelManager.tscn")
 
 func _on_gamereplay_pressed() -> void:
 	if Player.instance:

@@ -49,6 +49,19 @@ func _ready() -> void:
 	_update_user_display()
 	
 	UserManager.user_info_updated.connect(_update_user_display)
+	
+	_apply_pending_cloud_data()
+	_apply_circle_avatar(avatar_rect)
+
+
+func _apply_pending_cloud_data() -> void:
+	var pending_json: String = CloudArchiveService.get_pending_cloud_json()
+	if pending_json.is_empty():
+		return
+	print("[LevelManager] applying pending cloud data: ", pending_json.substr(0, 200))
+	var parsed: JSON = JSON.new()
+	if parsed.parse(pending_json) == OK and parsed.data is Dictionary:
+		apply_save_data(parsed.data)
 
 
 func _create_view_toggle() -> void:
@@ -169,6 +182,8 @@ func _update_display() -> void:
 		left_arrow.visible = false
 		right_arrow.visible = false
 		counter_label.text = ""
+		if _progress_label:
+			_progress_label.visible = false
 		return
 	
 	var sz: int = levels.size()
@@ -183,6 +198,20 @@ func _update_display() -> void:
 	_panel.modulate.a = 1.0
 	
 	level_title.text = data.title if data.title != "" else "未命名关卡"
+	_ensure_progress_label()
+	var sid: String = data.save_id
+	if not sid.is_empty():
+		var prog: Dictionary = ProgressStore.get_level(sid)
+		var stars: int = prog.get("stars", 0)
+		var pct: int = prog.get("best_percent", 0)
+		var dia: int = prog.get("diamonds", 0)
+		var star_str: String = ""
+		for i in range(3):
+			star_str += "★" if i < stars else "☆"
+		_progress_label.text = "%s  %d%%  💎%d" % [star_str, pct, dia]
+		_progress_label.visible = true
+	else:
+		_progress_label.visible = false
 	author_label.text = ""
 	counter_label.text = "%d / %d" % [current_index + 1, sz]
 	_play_level_music(data)
@@ -232,7 +261,17 @@ func _update_list() -> void:
 	for i in range(levels.size()):
 		var data := levels[i]
 		var btn := Button.new()
-		btn.text = "  %d. %s" % [i + 1, data.title if data.title != "" else "未命名关卡"]
+		var title_text: String = "  %d. %s" % [i + 1, data.title if data.title != "" else "未命名关卡"]
+		var sid: String = data.save_id
+		if not sid.is_empty():
+			var prog: Dictionary = ProgressStore.get_level(sid)
+			var stars: int = prog.get("stars", 0)
+			var pct: int = prog.get("best_percent", 0)
+			var star_str: String = ""
+			for j in range(3):
+				star_str += "★" if j < stars else "☆"
+			title_text += "  %s %d%%" % [star_str, pct]
+		btn.text = title_text
 		btn.alignment = HorizontalAlignment.HORIZONTAL_ALIGNMENT_LEFT
 		btn.custom_minimum_size.y = 44
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -354,12 +393,32 @@ func _update_user_display() -> void:
 		avatar_rect.texture = _make_default_avatar()
 
 
+var _progress_label: Label
+
+func _ensure_progress_label() -> void:
+	if _progress_label:
+		return
+	_progress_label = Label.new()
+	_progress_label.add_theme_font_size_override("font_size", 14)
+	_progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	info_container.add_child(_progress_label)
+	info_container.move_child(_progress_label, 0)
+
+
 func _make_default_avatar() -> ImageTexture:
 	if _default_avatar == null:
 		var image := Image.create(28, 28, false, Image.FORMAT_RGBA8)
 		image.fill(Color(0.3, 0.3, 0.3, 1))
 		_default_avatar = ImageTexture.create_from_image(image)
 	return _default_avatar
+
+
+func _apply_circle_avatar(rect: TextureRect) -> void:
+	var shader: Shader = load("res://Scripts/circle_avatar.gdshader")
+	if shader:
+		var mat := ShaderMaterial.new()
+		mat.shader = shader
+		rect.material = mat
 
 
 func _on_user_capsule_input(event: InputEvent) -> void:
@@ -389,8 +448,16 @@ func _load_pck(pck_path: String, level_key: String) -> void:
 
 
 func get_save_data() -> Dictionary:
-	return {}
+	return {
+		"level_progress": ProgressStore.to_dict(),
+	}
 
 
 func apply_save_data(data: Dictionary) -> void:
-	pass
+	print("[LevelManager] apply_save_data called with: ", data)
+	if data.has("level_progress"):
+		print("[LevelManager] restoring level_progress: ", data["level_progress"])
+		ProgressStore.from_dict(data["level_progress"])
+	else:
+		print("[LevelManager] no level_progress key in data")
+	_update_display()

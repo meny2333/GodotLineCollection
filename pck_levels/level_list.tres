@@ -13,6 +13,7 @@ music = ExtResource("3_ce8ow")
 pck_path = "res://pck_levels/2.pck"
 title = "Sample"
 scene_path = "#Template/[Scenes]/Sample/NewSample.tscn"
+save_id = "0"
 metadata/_custom_type_script = "uid://c0ibf0fotopcm"
 
 [sub_resource type="Resource" id="Resource_2jgfj"]
@@ -24,9 +25,11 @@ scene_path = "#Template/[Scenes]/ugc/ugc.tscn"
 
 [sub_resource type="Resource" id="Resource_pkba3"]
 script = ExtResource("1_2jgfj")
+cover = ExtResource("2_pkba3")
 pck_path = "res://pck_levels/sample.pck"
 title = "Sample"
 scene_path = "#Template/[Scenes]/Sample/Sample.tscn"
+save_id = "0"
 
 [resource]
 script = ExtResource("4_v7aw8")

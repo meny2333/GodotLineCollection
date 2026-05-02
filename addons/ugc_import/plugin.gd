@@ -246,8 +246,43 @@ func _find_level_data_in_pck(pck_dir: RefCounted, paths: Array) -> Dictionary:
 	if best_dir.is_empty():
 		return {}
 
+	var tres_path := _find_tres_in_dir(paths, best_dir)
+	var save_id_str := ""
+	if not tres_path.is_empty():
+		save_id_str = _extract_save_id(pck_dir, tres_path)
+
 	var info: Dictionary = {"name": best_dir, "scene_path": best_scene_path}
+	if not save_id_str.is_empty():
+		info["save_id"] = save_id_str
 	return info
+
+
+func _find_tres_in_dir(paths: Array, dir_name: String) -> String:
+	for p in paths:
+		var p_str: String = str(p).trim_suffix(".remap")
+		if dir_name == "unknown":
+			if p_str.ends_with(".tres"):
+				return p_str
+		else:
+			if p_str.contains("[Scenes]/%s/" % dir_name) and p_str.ends_with(".tres"):
+				return p_str
+	return ""
+
+
+func _extract_save_id(pck_dir: RefCounted, tres_path: String) -> String:
+	var raw: PackedByteArray = pck_dir.get_buffer(tres_path)
+	if raw.is_empty():
+		return ""
+	var text: String = raw.get_string_from_utf8()
+	for line in text.split("\n"):
+		var trimmed := line.strip_edges()
+		if trimmed.begins_with("saveID"):
+			var eq_idx := trimmed.find("=")
+			if eq_idx >= 0:
+				var val := trimmed.substr(eq_idx + 1).strip_edges()
+				return val
+	return ""
+
 
 func _on_import_confirmed() -> void:
 	var to_import: Array[Dictionary] = []
@@ -312,6 +347,7 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	var level_info: Dictionary = entry.get("level_info", {})
 	var scene_path := _extract_scene_path(pck_res_path, level_info)
 	var title: String = level_info.get("name", pck_res_path.get_file().get_basename())
+	var save_id: String = level_info.get("save_id", "")
 
 	var list: MenuLevelList
 	if ResourceLoader.exists(LEVEL_LIST_PATH):
@@ -323,6 +359,8 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 		if data.pck_path == pck_res_path:
 			data.title = title
 			data.scene_path = scene_path
+			if not save_id.is_empty():
+				data.save_id = save_id
 			ResourceSaver.save(list, LEVEL_LIST_PATH)
 			return
 
@@ -330,6 +368,7 @@ func _upsert_level_list(pck_res_path: String, entry: Dictionary) -> void:
 	data.title = title
 	data.pck_path = pck_res_path
 	data.scene_path = scene_path
+	data.save_id = save_id
 	list.levels.append(data)
 	ResourceSaver.save(list, LEVEL_LIST_PATH)
 

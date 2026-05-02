@@ -8,3 +8,4 @@ extends Resource
 
 @export var title: String = ""
 @export var scene_path: String = ""
+@export var save_id: String = ""

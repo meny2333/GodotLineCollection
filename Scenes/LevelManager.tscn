@@ -151,23 +151,23 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="UserCapsule" type="PanelContainer" parent="Margin/VBox/Header" index="4"]
+[node name="UserCapsule" type="PanelContainer" parent="Margin/VBox/Header" unique_id=918511185]
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_SecBtn")
 
-[node name="HBox" type="HBoxContainer" parent="Margin/VBox/Header/UserCapsule"]
+[node name="HBox" type="HBoxContainer" parent="Margin/VBox/Header/UserCapsule" unique_id=654325163]
 layout_mode = 2
-alignment = 1
 theme_override_constants/separation = 8
+alignment = 1
 
-[node name="AvatarRect" type="TextureRect" parent="Margin/VBox/Header/UserCapsule/HBox"]
+[node name="AvatarRect" type="TextureRect" parent="Margin/VBox/Header/UserCapsule/HBox" unique_id=1083468753]
 custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 expand_mode = 3
 stretch_mode = 6
 
-[node name="NameLabel" type="Label" parent="Margin/VBox/Header/UserCapsule/HBox"]
+[node name="NameLabel" type="Label" parent="Margin/VBox/Header/UserCapsule/HBox" unique_id=1494175706]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 14

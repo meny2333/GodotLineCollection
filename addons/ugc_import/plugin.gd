@@ -21,6 +21,14 @@ var delete_confirm_dialog: ConfirmationDialog
 
 var managed_levels: Array[MenuLevelData] = []
 
+var edit_title_input: LineEdit
+var cover_texture: TextureRect
+var music_label: Label
+var save_id_input: LineEdit
+var current_editing_level: MenuLevelData
+var cover_file_dialog: FileDialog
+var music_file_dialog: FileDialog
+
 const PCK_OUTPUT_DIR := "res://pck_levels"
 const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 
@@ -75,10 +83,84 @@ func _enter_tree() -> void:
 	# 创建编辑对话框
 	edit_dialog = ConfirmationDialog.new()
 	edit_dialog.title = "编辑关卡信息"
-	edit_dialog.size = Vector2i(400, 300)
+	edit_dialog.size = Vector2i(450, 400)
 	edit_dialog.ok_button_text = "保存"
+	edit_dialog.cancel_button_text = "取消"
 	edit_dialog.confirmed.connect(_on_edit_confirmed)
+
+	var edit_vbox := VBoxContainer.new()
+	edit_vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	# 标题
+	var title_label := Label.new()
+	title_label.text = "关卡标题："
+	edit_vbox.add_child(title_label)
+
+	edit_title_input = LineEdit.new()
+	edit_vbox.add_child(edit_title_input)
+
+	# 封面
+	var cover_label := Label.new()
+	cover_label.text = "封面图片："
+	edit_vbox.add_child(cover_label)
+
+	var cover_hbox := HBoxContainer.new()
+	cover_texture = TextureRect.new()
+	cover_texture.custom_minimum_size = Vector2(100, 100)
+	cover_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	cover_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	cover_hbox.add_child(cover_texture)
+
+	var cover_button := Button.new()
+	cover_button.text = "选择封面"
+	cover_button.pressed.connect(_on_select_cover)
+	cover_hbox.add_child(cover_button)
+	edit_vbox.add_child(cover_hbox)
+
+	# 音乐
+	var music_hbox_label := Label.new()
+	music_hbox_label.text = "背景音乐："
+	edit_vbox.add_child(music_hbox_label)
+
+	var music_hbox := HBoxContainer.new()
+	music_label = Label.new()
+	music_label.text = "未选择"
+	music_hbox.add_child(music_label)
+
+	var music_button := Button.new()
+	music_button.text = "选择音乐"
+	music_button.pressed.connect(_on_select_music)
+	music_hbox.add_child(music_button)
+	edit_vbox.add_child(music_hbox)
+
+	# 保存ID
+	var save_id_label := Label.new()
+	save_id_label.text = "保存ID："
+	edit_vbox.add_child(save_id_label)
+
+	save_id_input = LineEdit.new()
+	edit_vbox.add_child(save_id_input)
+
+	edit_dialog.add_child(edit_vbox)
 	add_child(edit_dialog)
+
+	# 封面文件对话框
+	cover_file_dialog = FileDialog.new()
+	cover_file_dialog.title = "选择封面图片"
+	cover_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	cover_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	cover_file_dialog.filters = PackedStringArray(["*.png, *.jpg, *.jpeg ; 图片文件"])
+	cover_file_dialog.file_selected.connect(_on_cover_selected)
+	add_child(cover_file_dialog)
+
+	# 音乐文件对话框
+	music_file_dialog = FileDialog.new()
+	music_file_dialog.title = "选择背景音乐"
+	music_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	music_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	music_file_dialog.filters = PackedStringArray(["*.mp3, *.ogg, *.wav ; 音频文件"])
+	music_file_dialog.file_selected.connect(_on_music_selected)
+	add_child(music_file_dialog)
 
 	# 创建删除确认对话框
 	delete_confirm_dialog = ConfirmationDialog.new()
@@ -173,6 +255,8 @@ func _exit_tree() -> void:
 	file_dialog.queue_free()
 	overwrite_dialog.queue_free()
 	edit_dialog.queue_free()
+	cover_file_dialog.queue_free()
+	music_file_dialog.queue_free()
 	delete_confirm_dialog.queue_free()
 
 func _on_import_pressed() -> void:
@@ -491,9 +575,21 @@ func _refresh_manage_list() -> void:
 			display_text += " (%s)" % level.pck_path.get_file()
 		manage_list.add_item(display_text)
 
-# 管理标签页函数占位符 - 将在后续任务中实现
 func _on_edit_selected() -> void:
-	pass
+	var selected := manage_list.get_selected_items()
+	if selected.is_empty():
+		EditorInterface.get_editor_toaster().push_toast("请先选择要编辑的关卡", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+	if selected.size() > 1:
+		EditorInterface.get_editor_toaster().push_toast("只能同时编辑一个关卡", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+
+	var idx: int = selected[0]
+	if idx < 0 or idx >= managed_levels.size():
+		return
+
+	current_editing_level = managed_levels[idx]
+	_show_edit_dialog(current_editing_level)
 
 func _on_delete_selected() -> void:
 	var selected := manage_list.get_selected_items()
@@ -550,4 +646,42 @@ func _on_move_down() -> void:
 	pass
 
 func _on_edit_confirmed() -> void:
-	pass
+	if current_editing_level == null:
+		return
+
+	current_editing_level.title = edit_title_input.text
+	current_editing_level.cover = cover_texture.texture as Texture2D
+	current_editing_level.save_id = save_id_input.text
+
+	var list := _load_level_list()
+	if list:
+		_save_level_list(list)
+
+	_refresh_manage_list()
+	current_editing_level = null
+
+	EditorInterface.get_editor_toaster().push_toast("关卡信息已保存", EditorInterface.get_editor_toaster().SEVERITY_INFO)
+
+func _show_edit_dialog(level: MenuLevelData) -> void:
+	edit_title_input.text = level.title
+	cover_texture.texture = level.cover
+	music_label.text = level.music.resource_path.get_file() if level.music else "未选择"
+	save_id_input.text = level.save_id
+	edit_dialog.popup_centered()
+
+func _on_select_cover() -> void:
+	cover_file_dialog.popup_centered(Vector2i(800, 600))
+
+func _on_cover_selected(path: String) -> void:
+	var texture := load(path) as Texture2D
+	if texture:
+		cover_texture.texture = texture
+
+func _on_select_music() -> void:
+	music_file_dialog.popup_centered(Vector2i(800, 600))
+
+func _on_music_selected(path: String) -> void:
+	var audio := load(path) as AudioStream
+	if audio:
+		current_editing_level.music = audio
+		music_label.text = path.get_file()

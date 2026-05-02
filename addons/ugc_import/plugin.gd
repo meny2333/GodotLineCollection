@@ -640,10 +640,52 @@ func _on_delete_confirmed() -> void:
 	EditorInterface.get_editor_toaster().push_toast("已删除 %d 个关卡" % deleted_count, EditorInterface.get_editor_toaster().SEVERITY_INFO)
 
 func _on_move_up() -> void:
-	pass
+	var selected := manage_list.get_selected_items()
+	if selected.is_empty():
+		return
+	if selected.size() > 1:
+		EditorInterface.get_editor_toaster().push_toast("请选择单个关卡进行移动", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+
+	var idx: int = selected[0]
+	if idx <= 0:
+		return
+
+	var list := _load_level_list()
+	if list == null:
+		return
+
+	var temp := list.levels[idx]
+	list.levels[idx] = list.levels[idx - 1]
+	list.levels[idx - 1] = temp
+
+	_save_level_list(list)
+	_refresh_manage_list()
+	manage_list.select(idx - 1)
 
 func _on_move_down() -> void:
-	pass
+	var selected := manage_list.get_selected_items()
+	if selected.is_empty():
+		return
+	if selected.size() > 1:
+		EditorInterface.get_editor_toaster().push_toast("请选择单个关卡进行移动", EditorInterface.get_editor_toaster().SEVERITY_WARNING)
+		return
+
+	var idx: int = selected[0]
+	var list := _load_level_list()
+	if list == null:
+		return
+
+	if idx >= list.levels.size() - 1:
+		return
+
+	var temp := list.levels[idx]
+	list.levels[idx] = list.levels[idx + 1]
+	list.levels[idx + 1] = temp
+
+	_save_level_list(list)
+	_refresh_manage_list()
+	manage_list.select(idx + 1)
 
 func _on_edit_confirmed() -> void:
 	if current_editing_level == null:

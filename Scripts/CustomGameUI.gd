@@ -5,7 +5,7 @@
 extends Control
 
 # --- 状态 ---
-var _was_dead: bool = false
+var _last_state: LevelManager.GameStatus = LevelManager.GameStatus.Waiting
 var _shown: bool = false
 var _cloud_saved: bool = false
 var _revive_shown: bool = false
@@ -53,37 +53,47 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var current_state = LevelManager.GameState
-	var is_dead = (current_state == LevelManager.GameStatus.Died)
 	
-	# 复活 UI：死亡 + 有检查点 + 未拒绝复活
-	var can_revive = is_dead and LevelManager.current_checkpoint != null and not _revive_declined
-	
-	if can_revive and not _revive_shown:
-		_show_revive_ui()
-	elif not is_dead and _revive_shown:
-		# 复活成功后，隐藏复活 UI
-		_hide_revive_ui_silent()
-	
-	# 更新进度条
-	if _revive_shown:
-		_update_revive_progress()
-	
-	# 原有逻辑：显示游戏 UI 时更新数据
-	if not _revive_shown:
-		if is_dead and not _was_dead:
-			_show_revive()
-		if not is_dead and _was_dead:
-			_hide_revive()
-		if _shown:
+	# 状态没变 → 只更新动态数据，跳过状态判断
+	if current_state == _last_state:
+		if _revive_shown:
+			_update_revive_progress()
+		elif _shown:
 			_update_ui_data()
+		return
 	
-	_was_dead = is_dead
-	
-	# 玩家复活后重置拒绝标志
-	if not is_dead and _revive_declined:
-		_revive_declined = false
+	# 状态变了 → 处理转换
+	_on_state_changed(_last_state, current_state)
+	_last_state = current_state
 
-func _show_revive() -> void:
+
+func _on_state_changed(_old_state: LevelManager.GameStatus, new_state: LevelManager.GameStatus) -> void:
+	match new_state:
+		LevelManager.GameStatus.Died:
+			# 有检查点且未拒绝 → 显示复活 UI
+			if LevelManager.current_checkpoint != null and not _revive_declined:
+				_show_revive_ui()
+			else:
+				_show_game_over_ui()
+		
+		LevelManager.GameStatus.Waiting:
+			# 复活后等待重新开始 → 立即隐藏复活 UI
+			if _revive_shown:
+				_hide_revive_ui_silent()
+		
+		LevelManager.GameStatus.Playing:
+			# 复活成功 / 重新开始 → 隐藏所有 UI
+			if _revive_shown:
+				_hide_revive_ui_silent()
+			if _shown:
+				_hide_revive()
+			_revive_declined = false
+		
+		LevelManager.GameStatus.Completed:
+			_show_game_over_ui()
+
+
+func _show_game_over_ui() -> void:
 	if _shown: return
 	_shown = true
 	_cloud_saved = false
@@ -105,13 +115,6 @@ func _show_revive_ui() -> void:
 func _hide_revive_ui_silent() -> void:
 	_revive_shown = false
 	revive_layer.visible = false
-
-func _hide_revive_ui_show_game() -> void:
-	_revive_shown = false
-	revive_layer.visible = false
-	ui_layer.visible = true
-	_update_ui_data()
-	_save_progress()
 
 func _save_progress() -> void:
 	var p = Player.instance
@@ -246,7 +249,8 @@ func _on_revive_btn_pressed() -> void:
 
 func _on_revive_back_pressed() -> void:
 	_revive_declined = true
-	_hide_revive_ui_show_game()
+	_hide_revive_ui_silent()
+	_show_game_over_ui()
 
 func _on_revive_pressed() -> void:
 	_hide_revive()

@@ -68,6 +68,18 @@ tracks/0/keys = {
 "update": 0,
 "values": [Vector3(6.5302486, 0, 26.103493)]
 }
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Vector3(1, 1, 1)]
+}
 
 [sub_resource type="Animation" id="Animation_4jcmk"]
 resource_name = "new_animation"
@@ -82,6 +94,18 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1, 1, 1),
 "update": 0,
 "values": [Vector3(6.5302486, 0, 26.103493), Vector3(10.827906, 0, 28.60758), Vector3(7.532775, 0.22648811, 32.51301)]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath(".:scale")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 0.8333333),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Vector3(1, 1, 1), Vector3(10, 1, 1)]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_5wtmk"]
@@ -130,7 +154,7 @@ transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019
 transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 4.5491443, -0.50000095, 15.75985)
 
 [node name="Trigger3" parent="." unique_id=262321607 instance=ExtResource("7_hta2p")]
-transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 4.5491443, -0.50000095, 23.84495)
+transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 4.5491443, -0.50000095, 20.443941)
 script = ExtResource("8_ymsgx")
 animators = Array[NodePath]([NodePath("../Ground3/AnimationPlayer")])
 dont_revive = false

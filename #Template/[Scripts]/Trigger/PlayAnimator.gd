@@ -1,5 +1,4 @@
 extends Area3D
-class_name animplay
 
 @export var animators: Array[NodePath] = []
 @export var dont_revive: bool = false

@@ -28,8 +28,7 @@ signal on_animation_end
 
 @export_tool_button("Get Original Value")
 var get_start_action = func():
-	if transform_type == TransformType.Add:
-		start_value = _get_value()
+	start_value = _get_value()
 
 @export_tool_button("Set Original Value")
 var set_start_action = func():
@@ -81,10 +80,11 @@ func _notification(what):
 		pass
 
 func Trigger():
-	if _finished:
+	if _finished and not Engine.is_editor_hint():
 		return
 	_is_playing = true
-	_finished = true
+	if not Engine.is_editor_hint():
+		_finished = true
 	_trigger_index = LevelManager.checkpoint_count
 	on_animation_start.emit()
 	if not dont_revive and not Engine.is_editor_hint():

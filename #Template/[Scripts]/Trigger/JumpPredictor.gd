@@ -33,20 +33,32 @@ var _line_mesh: MeshInstance3D
 var _trajectory_points: Array[Vector3] = []
 
 func _ready() -> void:
-	_check_parent()
 	top_level = true
 	
 	if not Engine.is_editor_hint() and show_in_game:
 		_start_simulation()
+	else:
+		# 编辑器模式下，延迟连接信号
+		call_deferred("_connect_to_jump")
 
 func _check_parent() -> void:
 	var parent = get_parent()
 	if parent is Area3D:
-		if parent.get_script() and parent.get_script().resource_path.ends_with("Jump.gd"):
+		var script = parent.get_script()
+		if script and script.resource_path.ends_with("Jump.gd"):
 			_jump_node = parent
 			print("[JumpPredictor] 找到Jump节点: ", parent.name)
 			return
 	print("[JumpPredictor] 父节点不是Area3D或没有Jump.gd脚本")
+
+func _connect_to_jump() -> void:
+	_check_parent()
+	if _jump_node and _jump_node.has_signal("height_changed"):
+		_jump_node.height_changed.connect(_on_height_changed)
+
+func _on_height_changed(new_height: float) -> void:
+	if Engine.is_editor_hint():
+		_draw_editor_preview_with_jump(_jump_node)
 
 func _start_simulation() -> void:
 	if not _jump_node:
@@ -154,10 +166,13 @@ func _clear() -> void:
 	_trajectory_points.clear()
 
 func _draw_editor_preview() -> void:
+	_check_parent()
 	if not _jump_node:
-		_check_parent()
-		if not _jump_node:
-			return
+		return
+	_draw_editor_preview_with_jump(_jump_node)
+
+func _draw_editor_preview_with_jump(jump_node: Node) -> void:
+	_jump_node = jump_node
 	
 	if not is_inside_tree():
 		return

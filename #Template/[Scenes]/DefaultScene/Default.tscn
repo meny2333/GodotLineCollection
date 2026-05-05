@@ -3,7 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://brdmblcywuklx" path="res://#Template/Player.tscn" id="1_5eet3"]
 [ext_resource type="Resource" uid="uid://bflra16kjrdhi" path="res://#Template/[Scenes]/DefaultScene/Default.tres" id="2_dmxrr"]
 [ext_resource type="PackedScene" uid="uid://be4vgpeo0nv84" path="res://#Template/CameraRoot.tscn" id="3_dj80y"]
-[ext_resource type="PackedScene" path="res://#Template/Trigger.tscn" id="7_hta2p"]
+[ext_resource type="PackedScene" uid="uid://b5hb8j8w782ki" path="res://#Template/trigger.tscn" id="7_hta2p"]
 [ext_resource type="Script" uid="uid://cu3xuawfji3m2" path="res://#Template/[Scripts]/Trigger/EventTrigger.gd" id="8_mcu0o"]
 [ext_resource type="Script" uid="uid://bhmnocupnsd06" path="res://#Template/[Scripts]/Animator/LocalPosAnimator.gd" id="8_nb4qh"]
 [ext_resource type="Script" uid="uid://b1m236nbmh7ke" path="res://#Template/[Scripts]/Trigger/PlayAnimator.gd" id="8_ymsgx"]
@@ -160,7 +160,7 @@ invoke_on_awake = false
 invoke_on_click = false
 
 [node name="Trigger5" parent="." unique_id=1401464213 instance=ExtResource("7_hta2p")]
-transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.6499991, 4, 0.53391075, 6)
+transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.6499991, 4, 2.5339108, 6)
 script = ExtResource("9_dhqas")
 height = 5.0
 
@@ -176,9 +176,9 @@ draw_preview = true
 transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 4.5491443, -0.50000095, 15.75985)
 
 [node name="Trigger4" parent="." unique_id=1667173945 instance=ExtResource("7_hta2p")]
-transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 4.5491443, -0.50000095, 15.75985)
+transform = Transform3D(1.767767, 0, -2.631019, 0, 2.5, 0, 1.767767, 0, 2.631019, 12.549145, -0.50000095, 29.75985)
 script = ExtResource("9_4jcmk")
-offset = Vector3(-5, -5, -5)
+offset = Vector3(-5, 20, -5)
 camera_rotation = Vector3(54, 45, 0)
 camera_scale = Vector3(1, 1, 1)
 field_of_view = 80.0
@@ -186,7 +186,6 @@ follow = true
 duration = 2.0
 transition_type = 1
 ease_type = 2
-can_be_triggered = true
 use_time = false
 trigger_time = 0.0
 

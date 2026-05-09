@@ -35,7 +35,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/ugc_import/plugin.cfg")
+enabled=PackedStringArray("res://addons/animation_event_tracks/plugin.cfg", "res://addons/ugc_import/plugin.cfg")
 
 [input]
 

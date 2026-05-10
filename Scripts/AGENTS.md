@@ -2,15 +2,17 @@
 
 ## 概览
 
-菜单 UI、云存档、用户管理的核心逻辑。7 个 GD 脚本 + 3 个 autoload 单例。
+菜单 UI、云存档、用户管理的核心逻辑，以及编辑器工具。9 个 GD 脚本 + 3 个 autoload 单例。
 
 ## 结构
 
 ```
 Scripts/
-├── LevelManager.gd      # 菜单主控（598行），管理关卡展示、PCK 加载、音乐播放
+├── BeatmapReader.gd      # @tool Node，从 .osu 谱面生成 GuidanceBox 序列
+├── LevelManager.gd       # 菜单主控（598行），管理关卡展示、PCK 加载、音乐播放
 ├── MenuLevelData.gd      # @tool 资源类，关卡元数据（封面/音乐/路径）
 ├── MenuLevelList.gd      # @tool 资源类，关卡列表容器
+├── NoteReader.gd         # @tool Node，从 .osu 谱面生成路面和自动触发器
 ├── progress_store.gd     # static 单例（RefCounted），本地进度存储
 ├── UserManager.gd        # autoload，用户信息 + 头像加载
 ├── GameUIHook.gd         # autoload，游戏 UI 钩子
@@ -24,13 +26,16 @@ Scripts/
 
 | 类名 | 类型 | 职责 |
 |------|------|------|
+| `BeatmapReader` | Node (@tool) | 解析 .osu 谱面 [HitObjects]，沿路径生成 GuidanceBox 序列 |
 | `MenuLevelData` | Resource (@tool) | 关卡元数据：封面、音乐、PCK 路径、场景路径 |
 | `MenuLevelList` | Resource (@tool) | 关卡列表容器，存储为 `level_list.tres` |
+| `NoteReader` | Node (@tool) | 解析 .osu 谱面 [HitObjects]，生成路面和自动触发器 |
 | `ProgressStore` | RefCounted (static) | 本地进度：星星、百分比、钻石 |
 | `UserManager` | Node (autoload) | 用户昵称、头像、邮箱 |
 
 ## 模式
 
+- **@tool Node 模式**：`BeatmapReader`、`NoteReader` 挂到场景节点，通过 Inspector 设参数，勾选「执行生成」触发
 - **资源类必须加 `@tool`**：`MenuLevelData`、`MenuLevelList` 在编辑器中使用
 - **static 单例模式**：`ProgressStore` 用 `static var` 而非 autoload
 - **信号驱动**：`UserManager.user_info_updated` 通知 UI 更新
@@ -40,3 +45,4 @@ Scripts/
 - `LevelManager` 是 Control 节点，不是 Template 中的 static 单例
 - PCK 加载不预检路径，直接 `change_scene_to_file`
 - 音乐播放支持淡入淡出 + 循环计时器
+- `BeatmapReader` 默认从场景中自动查找 Player 节点获取方向/速度；找不到时可切换 `use_overrides` 手动设置

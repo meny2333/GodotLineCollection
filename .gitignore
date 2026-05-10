@@ -14,6 +14,9 @@ export_presets.cfg
 data_*/
 mono_crash.*.json
 
+# Edit journal
+.edit_journal
+
 # System/tool-specific
 .DS_Store
 .DS_Store?

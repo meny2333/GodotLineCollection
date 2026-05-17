@@ -1,7 +1,7 @@
 72322a848ab928aa5c89f0cb78209805
-::res://::1779008547
+::res://::1779009212
 CLAUDE.md::TextFile::-1::1778944827::0::1::::<><><>0<>0<><>::
-export_presets.cfg::TextFile::-1::1779008477::0::1::::<><><>0<>0<><>::
+export_presets.cfg::TextFile::-1::1779008923::0::1::::<><><>0<>0<><>::
 pck_manager.cfg::TextFile::-1::1777908815::0::1::::<><><>0<>0<><>::
 README.md::TextFile::-1::1777908815::0::1::::<><><>0<>0<><>::
 ::res://#Template/::1778380822
@@ -27,7 +27,7 @@ MainPlayer.tres::StandardMaterial3D::649392564793112382::1778380002::0::1::::<><
 Obstacle.tres::StandardMaterial3D::8190147903951012095::1777908815::0::1::::<><><>0<>0<><>::
 ::res://#Template/[Music]/::1777908815
 Sample.mp3::AudioStreamMP3::7706219700047830586::1777908815::1777690710::1::::<><><>0<>0<>f61d916b86d24a8bb9a798ad0d05d247<>res://.godot/imported/Sample.mp3-7224585c99cf045ff3baec68181001af.mp3str::
-::res://#Template/[Resources]/::1777969805
+::res://#Template/[Resources]/::1779008548
 BlackCrown_Light.png::CompressedTexture2D::6999918258747745115::1777908815::1779008548::1::::<><><>0<>0<>8c5324fc2e080a2a183770dc70795c41<>res://.godot/imported/BlackCrown_Light.png-7e1ed56c2cb695be8e2ebb35eb09973b.s3tc.ctex<*>res://.godot/imported/BlackCrown_Light.png-7e1ed56c2cb695be8e2ebb35eb09973b.etc2.ctex::
 BlackCrown_UnLight.png::CompressedTexture2D::2516315291463339766::1777908815::1779008548::1::::<><><>0<>0<>3c76e4b6363645347f76f2db26f501d2<>res://.godot/imported/BlackCrown_UnLight.png-35319f8819b1510acf38877203a96e51.s3tc.ctex<*>res://.godot/imported/BlackCrown_UnLight.png-35319f8819b1510acf38877203a96e51.etc2.ctex::
 CaviarDreams-1.ttf::FontFile::7771644123179967674::1777908815::1777690710::1::::<><><>0<>0<>3799d7d63b7566344dc0127774276938<>res://.godot/imported/CaviarDreams-1.ttf-3e30ab377af89deedf16df1a2dfa385d.fontdata::

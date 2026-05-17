@@ -1,0 +1,54 @@
+name: Export Game
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0-test)'
+        required: true
+        default: 'v1.0.0-test'
+      prerelease:
+        description: 'Is this a prerelease?'
+        type: boolean
+        default: true
+
+jobs:
+  export_game:
+    runs-on: ubuntu-latest
+    name: Export Game Job
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # 获取完整历史，确保标签正确
+
+      - name: Install Wine
+        id: wine_install
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt update
+          sudo apt install -y wine64 wine32
+          echo "WINE_PATH=$(which wine)" >> $GITHUB_OUTPUT
+
+      - name: Export Game
+        id: export
+        uses: firebelley/godot-export@v7.0.0
+        with:
+          godot_executable_download_url: https://atomgit.com/godothub/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_linux.x86_64.zip 
+          godot_export_templates_download_url: https://atomgit.com/godothub/godot/releases/download/4.6.1-stable/Godot_v4.6.1-stable_export_templates.tpz 
+          relative_project_path: ./
+          relative_export_path: ./build
+          archive_output: true
+          wine_path: ${{ steps.wine_install.outputs.WINE_PATH }}
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1.18.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          generateReleaseNotes: true
+          tag: ${{ github.event.inputs.version }}  # 使用手动输入的版本号，避免与分支名冲突
+          name: Release ${{ github.event.inputs.version }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          artifacts: ${{ steps.export.outputs.archive_directory }}/*

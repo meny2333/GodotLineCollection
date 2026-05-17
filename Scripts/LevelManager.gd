@@ -24,8 +24,10 @@ var _is_music_fading: bool = false
 var _animating: bool = false
 var _default_avatar: ImageTexture
 var _detail_popup: AcceptDialog
+var _import_dialog: FileDialog
 
 @onready var refresh_btn: Button = $Margin/VBox/Header/RefreshBtn
+@onready var import_btn: Button = $Margin/VBox/Header/ImportBtn
 
 enum ViewMode { CARD, LIST }
 var _current_mode: ViewMode = ViewMode.CARD
@@ -57,6 +59,7 @@ func _ready() -> void:
 	
 	_apply_pending_cloud_data()
 	_apply_circle_avatar(avatar_rect)
+	_create_import_dialog()
 
 
 func _apply_pending_cloud_data() -> void:
@@ -85,6 +88,69 @@ func _create_view_toggle() -> void:
 	$Margin/VBox/Header.add_child(_view_toggle_btn)
 	$Margin/VBox/Header.move_child(_view_toggle_btn, 1) # 放在刷新按钮后面
 	_view_toggle_btn.pressed.connect(_on_view_toggle_pressed)
+
+
+func _create_import_dialog() -> void:
+	_import_dialog = FileDialog.new()
+	_import_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_import_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_import_dialog.filters = PackedStringArray(["*.pck ; PCK Files"])
+	_import_dialog.title = "选择PCK文件"
+	_import_dialog.size = Vector2i(600, 400)
+	_import_dialog.file_selected.connect(_on_pck_file_selected)
+	add_child(_import_dialog)
+
+
+func _validate_pck(pck_global_path: String) -> Dictionary:
+	var pck := preload("res://addons/PCKManager/PCKDirAccess.gd").new()
+	pck.open(pck_global_path)
+	if pck.file == null:
+		return {}
+	var paths := pck.get_paths()
+	pck.close()
+	if paths.is_empty():
+		return {}
+	return _find_level_scene(paths)
+
+
+func _find_level_scene(paths: Array[String]) -> Dictionary:
+	var scene_dirs: Dictionary = {}
+	for p in paths:
+		var clean: String = p.trim_suffix(".remap")
+		if not clean.contains("[Scenes]/"):
+			continue
+		var scenes_idx := clean.find("[Scenes]/")
+		var after := clean.substr(scenes_idx + "[Scenes]/".length())
+		var parts := after.split("/")
+		if parts.size() >= 2:
+			var dir_name: String = parts[0]
+			if not scene_dirs.has(dir_name):
+				scene_dirs[dir_name] = {"has_tscn": false, "has_tres": false}
+			if parts[1].ends_with(".tscn"):
+				scene_dirs[dir_name]["has_tscn"] = true
+			elif parts[1].ends_with(".tres"):
+				scene_dirs[dir_name]["has_tres"] = true
+
+	var best_dir: String = ""
+	for dir_name in scene_dirs:
+		if scene_dirs[dir_name]["has_tscn"] and scene_dirs[dir_name]["has_tres"]:
+			best_dir = dir_name
+			break
+
+	if best_dir.is_empty():
+		for p in paths:
+			var clean: String = p.trim_suffix(".remap")
+			if clean.ends_with(".tscn"):
+				return {"scene_path": clean, "name": "unknown"}
+
+	if best_dir.is_empty():
+		return {}
+
+	for p in paths:
+		var clean: String = p.trim_suffix(".remap")
+		if clean.contains("[Scenes]/%s/" % best_dir) and clean.ends_with(".tscn"):
+			return {"scene_path": clean, "name": best_dir}
+	return {}
 
 
 func _create_panels() -> void:
@@ -514,6 +580,29 @@ func _on_refresh_button_pressed() -> void:
 	current_index = 0
 	_update_display()
 	info_label.text = "已刷新"
+
+
+func _on_import_pck_pressed() -> void:
+	_import_dialog.popup_centered()
+
+
+func _on_pck_file_selected(path: String) -> void:
+	var result := _validate_pck(path)
+	if result.is_empty():
+		info_label.text = "无效PCK：未找到关卡场景"
+		return
+
+	var scene_path: String = result["scene_path"]
+	var level_name: String = result["name"]
+
+	var success := ProjectSettings.load_resource_pack(path)
+	if not success:
+		info_label.text = "PCK加载失败"
+		return
+
+	loaded_pcks.append(path)
+	info_label.text = "正在加载: %s" % level_name
+	get_tree().change_scene_to_file(scene_path)
 
 
 func _update_user_display() -> void:

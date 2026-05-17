@@ -125,6 +125,17 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_SecBtnHover")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
 text = "刷新"
 
+[node name="ImportBtn" type="Button" parent="Margin/VBox/Header"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/normal = SubResource("StyleBoxFlat_SecBtn")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_SecBtn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_SecBtnHover")
+theme_override_styles/disabled = SubResource("StyleBoxFlat_DisabledBtn")
+text = "导入PCK"
+
 [node name="SpacerL" type="Control" parent="Margin/VBox/Header" unique_id=1273816741]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -286,6 +297,7 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_SecBtnHover")
 text = "刷新列表"
 
 [connection signal="pressed" from="Margin/VBox/Header/RefreshBtn" to="." method="_on_refresh_button_pressed"]
+[connection signal="pressed" from="Margin/VBox/Header/ImportBtn" to="." method="_on_import_pck_pressed"]
 [connection signal="gui_input" from="Margin/VBox/Header/UserCapsule" to="." method="_on_user_capsule_input"]
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/LeftArrow" to="." method="_on_left_arrow"]
 [connection signal="pressed" from="Margin/VBox/Preview/PreviewRow/RightArrow" to="." method="_on_right_arrow"]

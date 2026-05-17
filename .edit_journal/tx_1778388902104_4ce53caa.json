@@ -1,0 +1,30 @@
+{
+  "transaction_id": "tx_1778388902104_4ce53caa",
+  "status": "active",
+  "created_at": 1778388902.1046097,
+  "steps": [
+    {
+      "step_id": "step_f003874d",
+      "file": "D:\\Code\\GODOTLINE\\GodotLineCollection\\project.godot",
+      "patch": {
+        "old_text": "enabled=PackedStringArray(\"res://addons/ugc_import/plugin.cfg\")",
+        "new_text": "enabled=PackedStringArray(\"res://addons/ugc_import/plugin.cfg\", \"res://addons/first_run_welcome/plugin.cfg\")",
+        "old_start": null,
+        "old_end": null
+      },
+      "snapshot_id": "e7a6b322",
+      "status": "committed",
+      "diagnostics": [],
+      "error": null,
+      "timestamp": 1778388902.107154,
+      "retry_count": 0,
+      "metadata": {}
+    }
+  ],
+  "committed_steps": [
+    "step_f003874d"
+  ],
+  "failed_steps": [],
+  "rollback_history": [],
+  "metadata": {}
+}

@@ -1,0 +1,30 @@
+{
+  "transaction_id": "tx_1778377733650_7204e795",
+  "status": "active",
+  "created_at": 1778377733.6504889,
+  "steps": [
+    {
+      "step_id": "step_e704efdc",
+      "file": "D:\\Code\\GODOTLINE\\GodotLineCollection\\.gitignore",
+      "patch": {
+        "old_text": "# System/tool-specific\n.DS_Store",
+        "new_text": "# Edit journal\n.edit_journal\n\n# System/tool-specific\n.DS_Store",
+        "old_start": null,
+        "old_end": null
+      },
+      "snapshot_id": "e9c65463",
+      "status": "committed",
+      "diagnostics": [],
+      "error": null,
+      "timestamp": 1778377733.6527045,
+      "retry_count": 0,
+      "metadata": {}
+    }
+  ],
+  "committed_steps": [
+    "step_e704efdc"
+  ],
+  "failed_steps": [],
+  "rollback_history": [],
+  "metadata": {}
+}

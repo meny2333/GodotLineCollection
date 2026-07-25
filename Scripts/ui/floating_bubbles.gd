@@ -1,5 +1,12 @@
 extends Control
 
+var base_color: Color = Color(0.4, 0.55, 0.9)
+
+
+func set_base_color(c: Color) -> void:
+	base_color = c
+
+
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for _i in range(10):
@@ -16,7 +23,7 @@ func _add_bubble(random_y: bool) -> void:
 	var vp := get_viewport().get_visible_rect()
 	var s := randf_range(4.0, 22.0)
 	var bubble := ColorRect.new()
-	bubble.color = Color(0.4, 0.55, 0.9, randf_range(0.02, 0.08))
+	bubble.color = Color(base_color.r, base_color.g, base_color.b, randf_range(0.02, 0.08))
 	bubble.size = Vector2(s, s)
 	bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var start_y := randf_range(0, vp.size.y) if random_y else (vp.size.y + s)

@@ -59,8 +59,10 @@ func start() -> void:
 	_download_random()
 
 func _fetch_list() -> void:
-	_http.request_completed.disconnect(_on_list_fetched) if _http.request_completed.is_connected(_on_list_fetched) else null
-	_http.request_completed.connect(_on_list_fetched)
+	if _http.request_completed.is_connected(_on_list_fetched):
+		_http.request_completed.disconnect(_on_list_fetched) 
+	else:
+		_http.request_completed.connect(_on_list_fetched)
 	var err := _http.request(AD_LIST_URL)
 	if err != OK:
 		print("[Ad] Failed to request ad list: ", err)

@@ -20,3 +20,5 @@ extends Resource
 @export var music_fade_in: float = 1.0
 ## 音乐淡出时长（秒）
 @export var music_fade_out: float = 1.0
+## 关卡主题色（用于主菜单背景过渡）
+@export var accent_color: Color = Color(0.067, 0.094, 0.153)

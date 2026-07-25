@@ -42,6 +42,8 @@ var _pck_loader: PCKLoader
 var _slide_wrap: Control
 var _panel: PanelContainer
 var _texture: TextureRect
+var _bg: ColorRect
+var _bg_tween: Tween
 
 const LEVEL_LIST_PATH := "res://pck_levels/level_list.tres"
 const SLIDE_DUR := 0.3
@@ -49,6 +51,7 @@ const FLY_IN_DUR := 0.5
 
 func _ready() -> void:
 	Engine.time_scale = 1.0
+	_bg = $BG
 
 	_music_preview = MusicPreview.new(self)
 	_energy_system = EnergySystem.new(header_box.get_node("EnergyLabel"), header_box.get_node("WatchAdBtn"))
@@ -299,6 +302,17 @@ func _update_display() -> void:
 	counter_label.text = "%d / %d" % [current_index + 1, sz]
 	_music_preview.play(data)
 	info_label.text = ""
+	_transition_bg_color(data.accent_color)
+
+
+func _transition_bg_color(target: Color) -> void:
+	if _bg_tween and _bg_tween.is_valid():
+		_bg_tween.kill()
+	_bg_tween = create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_bg_tween.tween_property(_bg, "color", target, 0.5)
+	var bubbles = $Bubbles
+	if bubbles.has_method("set_base_color"):
+		_bg_tween.parallel().tween_method(bubbles.set_base_color, bubbles.base_color, target.lightened(0.3), 0.5)
 
 
 func _apply_display_settings() -> void:

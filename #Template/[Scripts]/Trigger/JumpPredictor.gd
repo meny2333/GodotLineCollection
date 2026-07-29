@@ -54,7 +54,7 @@ var _line_mesh: MeshInstance3D
 
 func _ready() -> void:
 	top_level = true
-	
+
 	if not Engine.is_editor_hint() and show_in_game:
 		_start_simulation()
 	elif Engine.is_editor_hint() and draw_preview:
@@ -62,14 +62,16 @@ func _ready() -> void:
 		call_deferred("_draw_line")
 
 func _check_parent() -> void:
-	var parent = get_parent()
-	if parent is Area3D:
-		var script = parent.get_script()
+	var parent: Node = get_parent()
+	if not parent:
+		return
+	for sibling in parent.get_children():
+		if sibling == self:
+			continue
+		var script: Script = sibling.get_script()
 		if script and script.resource_path.ends_with("Jump.gd"):
-			_jump_node = parent
-			print("[JumpPredictor] 找到Jump节点: ", parent.name)
+			_jump_node = sibling
 			return
-	print("[JumpPredictor] 父节点不是Area3D或没有Jump.gd脚本")
 
 func _connect_to_jump() -> void:
 	if _jump_node:
@@ -113,16 +115,16 @@ func _draw_line() -> void:
 		_line_mesh.mesh = null
 		return
 
-	var parent = get_parent()
-	var base_pos = parent.global_position if parent else global_position
+	var parent: Node3D = get_parent() as Node3D
+	var base_pos: Vector3 = parent.global_position if parent else global_position
 
 	var height: float = _jump_node.get("height") if _jump_node else 1.0
 	var gravity_strength: float = 9.8
 	if ProjectSettings.has_setting("physics/3d/default_gravity"):
 		gravity_strength = ProjectSettings.get_setting("physics/3d/default_gravity")
-	var jump_speed = sqrt(2 * gravity_strength * height)
+	var jump_speed: float = sqrt(2 * gravity_strength * height)
 
-	var immediate_mesh := ImmediateMesh.new()
+	var immediate_mesh: ImmediateMesh = ImmediateMesh.new()
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
 
 	var pos: Vector3 = base_pos
@@ -142,7 +144,7 @@ func _draw_line() -> void:
 	immediate_mesh.surface_end()
 	_line_mesh.mesh = immediate_mesh
 
-	var material := StandardMaterial3D.new()
+	var material: StandardMaterial3D = StandardMaterial3D.new()
 	material.albedo_color = color
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	_line_mesh.material_override = material

@@ -1,0 +1,302 @@
+extends Area3D
+class_name Checkpoint
+
+enum Direction { First, Second }
+
+@export_group("Config")
+@export var AutoRecord: bool = false
+@export var GameTime: float = 0.0
+@export var PlayerSpeed: float = 12.0
+@export var UsingOldCameraFollower: bool = false
+
+@export_group("Player")
+@export var direction: Direction = Direction.First
+
+@export_group("Camera")
+@export var camera_new: CameraSettings = CameraSettings.new()
+@export var camera_old: OldCameraSettings = OldCameraSettings.new()
+@export var manual_camera: bool = false
+
+@export_group("Fog")
+@export var fog: FogSettings = FogSettings.new()
+@export var manual_fog: bool = false
+
+@export_group("Light")
+@export var light: LightSettings = LightSettings.new()
+@export var manual_light: bool = false
+
+@export_group("Ambient")
+@export var ambient: AmbientSettings = AmbientSettings.new()
+@export var manual_ambient: bool = false
+
+@export_group("Colors")
+@export var material_colors_auto: Array[SingleColor] = []
+@export var material_colors_manual: Array[SingleColor] = []
+
+signal on_revive
+
+var used: bool = false
+var used_revive: bool = false
+
+var _track_progress: float = 0.0
+var _scene_gravity: Vector3 = Vector3.ZERO
+var _player_first_direction: Vector3 = Vector3.ZERO
+var _player_second_direction: Vector3 = Vector3.ZERO
+var _fake_players_data: Array[Dictionary] = []
+
+var _revive_position: Node3D
+
+func _ready() -> void:
+	_revive_position = get_node_or_null("RevivePosition")
+	if _revive_position:
+		_revive_position.visible = false
+
+	if not body_entered.is_connected(_on_checkpoint_body_entered):
+		body_entered.connect(_on_checkpoint_body_entered)
+
+func _on_checkpoint_body_entered(body: Node3D) -> void:
+	if used:
+		return
+	if not body is Player:
+		push_error("Checkpoint.gd: 进入触发器的不是 Player 类型，无法保存检查点")
+		return
+	_enter_trigger(body)
+
+func _enter_trigger(body: Node3D) -> void:
+	used = true
+	LevelManager.current_checkpoint = self
+	LevelManager.checkpoint_count += 1
+
+	# Capture camera settings
+	if not manual_camera:
+		if not UsingOldCameraFollower:
+			if CameraFollower.instance:
+				camera_new = camera_new.get_camera()
+		else:
+			if OldCameraFollower.instance:
+				camera_old = camera_old.get_camera()
+
+	if not manual_fog:
+		_capture_fog()
+	if not manual_light:
+		_capture_light()
+	if not manual_ambient:
+		_capture_ambient()
+
+	# Capture material colors auto
+	for s in material_colors_auto:
+		s.apply()
+
+	# Save player state
+	_player_first_direction = body.firstDirection
+	_player_second_direction = body.secondDirection
+	body.capture_managed_animation_state()
+	_track_progress = body.animation_node.get_current_animation_position() if body.animation_node and body.animation_node.is_playing() else 0.0
+	_scene_gravity = ProjectSettings.get_setting("physics/3d/default_gravity_vector") * ProjectSettings.get_setting("physics/3d/default_gravity")
+
+	if AutoRecord:
+		var music_player: AudioStreamPlayer = body.get_node_or_null("MusicPlayer") as AudioStreamPlayer
+		if music_player and music_player.playing:
+			GameTime = music_player.get_playback_position()
+		PlayerSpeed = body.speed
+
+	# Save to LevelManager (OldCameraFollower only, new camera stores in camera_new)
+	if UsingOldCameraFollower:
+		LevelManager.save_checkpoint(body, OldCameraFollower.instance, _revive_position)
+	else:
+		LevelManager.save_checkpoint(body, null, _revive_position)
+
+	# Save FakePlayer states
+	_fake_players_data.clear()
+	var fake_players: Array[Node] = body.get_tree().get_nodes_in_group("fake_players")
+	for fp in fake_players:
+		var fake: FakePlayer = fp as FakePlayer
+		if fake:
+			_fake_players_data.append(fake.get_reset_data())
+
+func _capture_fog() -> void:
+	var env: Environment = _get_scene_environment()
+	if env:
+		fog.use_fog = env.fog_enabled
+		fog.fog_color = env.fog_light_color
+		fog.start = env.fog_depth_begin
+		fog.end = env.fog_depth_end
+
+func _capture_light() -> void:
+	var main_line: Player = Player.instance
+	if main_line:
+		var scene_light: DirectionalLight3D = main_line.get_scene_light()
+		if scene_light:
+			light.rotation = scene_light.rotation_degrees
+			light.color = scene_light.light_color
+			light.intensity = scene_light.light_energy
+			light.shadow_strength = 1.0 if scene_light.shadow_enabled else 0.0
+
+func _capture_ambient() -> void:
+	var env: Environment = _get_scene_environment()
+	if env:
+		ambient.intensity = env.ambient_light_energy
+		match env.ambient_light_source:
+			Environment.AMBIENT_SOURCE_BG:
+				ambient.lighting_type = AmbientSettings.EnvironmentLightingType.Skybox
+			Environment.AMBIENT_SOURCE_COLOR:
+				ambient.lighting_type = AmbientSettings.EnvironmentLightingType.Color
+				ambient.ambient_color = env.ambient_light_color
+			Environment.AMBIENT_SOURCE_SKY:
+				ambient.lighting_type = AmbientSettings.EnvironmentLightingType.Skybox
+			_:
+				ambient.lighting_type = AmbientSettings.EnvironmentLightingType.Color
+
+func _restore_camera() -> void:
+	if not UsingOldCameraFollower:
+		if CameraFollower.instance:
+			camera_new.set_camera()
+	else:
+		if OldCameraFollower.instance:
+			camera_old.set_camera()
+
+func _restore_fog() -> void:
+	var env: Environment = _get_scene_environment()
+	if env:
+		env.fog_enabled = fog.use_fog
+		env.fog_light_color = fog.fog_color
+		env.fog_depth_begin = fog.start
+		env.fog_depth_end = fog.end
+
+func _restore_light() -> void:
+	var main_line: Player = Player.instance
+	if main_line:
+		light.apply(main_line.get_scene_light())
+
+func _restore_ambient() -> void:
+	var env: Environment = _get_scene_environment()
+	if env:
+		env.ambient_light_energy = ambient.intensity
+		match ambient.lighting_type:
+			AmbientSettings.EnvironmentLightingType.Skybox:
+				env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
+			AmbientSettings.EnvironmentLightingType.Color:
+				env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+				env.ambient_light_color = ambient.ambient_color
+			AmbientSettings.EnvironmentLightingType.Gradient:
+				env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+				env.ambient_light_sky_color = ambient.sky_color
+				env.ambient_light_horizon_color = ambient.equator_color
+				env.ambient_light_ground_color = ambient.ground_color
+
+func _get_scene_environment() -> Environment:
+	var main_line: Player = Player.instance
+	if main_line:
+		return main_line.get_scene_environment()
+	return get_viewport().get_world_3d().environment
+
+func revive() -> void:
+	var main_line: Player = Player.instance
+	if not main_line:
+		return
+
+	# Decrement crown on first revive
+	if not used_revive:
+		LevelManager.crown = maxi(LevelManager.crown - 1, 0)
+		used_revive = true
+
+	# Restore player state
+	LevelManager.load_checkpoint_to_main_line(main_line)
+	main_line.is_live = true
+	main_line.velocity = Vector3.ZERO
+	main_line.is_start = false
+	main_line.allowTurn = true
+	main_line.scale = Vector3.ONE
+	main_line._clear_tail()
+	Engine.time_scale = 1.0
+
+	# Restore direction
+	match direction:
+		Direction.First:
+			if _player_first_direction != Vector3.ZERO:
+				main_line.rotation_degrees = _player_first_direction
+		Direction.Second:
+			if _player_second_direction != Vector3.ZERO:
+				main_line.rotation_degrees = _player_second_direction
+
+	# Clear death particles
+	get_tree().call_group("death_particles", "queue_free")
+
+	# Kill all tweens
+	for tween in get_tree().get_processed_tweens():
+		tween.kill()
+
+	# Restore camera
+	if not UsingOldCameraFollower:
+		var cf: CameraFollower = CameraFollower.instance
+		if cf:
+			cf.kill_all_camera_tweens()
+			cf.reset_shake()
+			cf.global_position = main_line.global_position
+			camera_new.set_camera()
+	else:
+		var ocf: OldCameraFollower = OldCameraFollower.instance
+		if ocf:
+			ocf.kill_all()
+			ocf.reset_shake()
+			LevelManager.load_to_camera_follower(ocf)
+			ocf.global_position = main_line.global_position
+			if ocf.rotator:
+				ocf.rotator.rotation_degrees = LevelManager.camera_checkpoint.rotation_degrees
+			ocf._checkpoint_applied = false
+			ocf.follow = true
+			ocf._is_rotating = false
+
+	# Restore settings
+	if not manual_camera:
+		_restore_camera()
+	if not manual_fog:
+		_restore_fog()
+	if not manual_light:
+		_restore_light()
+	if not manual_ambient:
+		_restore_ambient()
+	main_line.restore_managed_animation_state()
+
+	# Restore material colors
+	for s in material_colors_auto:
+		s.apply()
+	for s in material_colors_manual:
+		s.apply()
+
+	# Restore FakePlayers
+	var fake_players: Array[Node] = main_line.get_tree().get_nodes_in_group("fake_players")
+	for i in range(min(fake_players.size(), _fake_players_data.size())):
+		var fake: FakePlayer = fake_players[i] as FakePlayer
+		if fake and _fake_players_data[i].get("playing", false):
+			fake.set_reset_data(_fake_players_data[i])
+
+	# Restore music to checkpoint position (paused, waiting for player to start)
+	var music_player: AudioStreamPlayer = main_line.get_node_or_null("MusicPlayer") as AudioStreamPlayer
+	if music_player:
+		music_player.stop()
+		music_player.volume_db = 0.0
+		music_player.pitch_scale = 1.0
+		# Set music to checkpoint position but don't play yet
+		var music_time: float = LevelManager.music_checkpoint_time
+		if music_time > 0.0 and main_line.level_data and main_line.level_data.levelAudioClip:
+			music_player.stream = main_line.level_data.levelAudioClip
+			# Play then immediately pause to set the position
+			music_player.play(music_time)
+			music_player.stream_paused = true
+
+	# Restore animation to checkpoint position (paused, waiting for player to start)
+	if main_line.animation_node and main_line.animation_node.has_animation("level"):
+		if _track_progress > 0.0:
+			main_line.animation_node.play("level")
+			main_line.animation_node.seek(_track_progress, true)
+			main_line.animation_node.pause()
+			LevelManager.anim_time = _track_progress
+		else:
+			main_line.animation_node.stop()
+
+	LevelManager.GameState = LevelManager.GameStatus.Waiting
+	LevelManager.emit_revive()
+
+
+	on_revive.emit()

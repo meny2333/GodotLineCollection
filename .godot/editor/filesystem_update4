@@ -1,12 +1,1 @@
-res://Scripts/level_manager/ad_system.gd
-res://Scripts/level_manager/energy_system.gd
-res://Scripts/ui/settings_panel.gd
 res://Scenes/LevelManager.tscn
-res://Scripts/LevelManager.gd
-res://Scenes/ad_overlay.tscn
-res://Scripts/MenuLevelData.gd
-res://Scripts/ui/floating_bubbles.gd
-res://pck_levels/level_list.tres
-res://addons/godot-vlc/godot_vlc.gdextension
-res://Scripts/level_manager/music_preview.gd
-res://Scripts/level_manager/pck_loader.gd

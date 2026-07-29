@@ -29,6 +29,7 @@ LongSceneManager="*uid://b1wsglrtdrf6d"
 ImGuiRoot="*uid://dugmpnsxaagba"
 PopupToast="*res://Scripts/PopupToast.gd"
 ImGuiDebug="*res://Scripts/ImGuiDebug.gd"
+MCPRuntimeProbe="*res://addons/godot_mcp/runtime/mcp_runtime_probe.gd"
 
 [debug]
 
@@ -40,7 +41,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/imgui-godot/plugin.cfg", "res://addons/long_scene_manager/plugin.cfg", "res://addons/ugc_import/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg", "res://addons/imgui-godot/plugin.cfg", "res://addons/long_scene_manager/plugin.cfg", "res://addons/ugc_import/plugin.cfg")
 
 [input]
 

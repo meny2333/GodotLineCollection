@@ -122,9 +122,9 @@ func _save_progress() -> void:
 		print("[CustomGameUI] save skipped: no player or level_data")
 		return
 	var save_id: int = p.level_data.saveID
-	print("[CustomGameUI] saving progress: save_id=%d crown=%d percent=%d diamond=%d" % [save_id, LevelManager.crown, LevelManager.percent, LevelManager.diamond])
+	print("[CustomGameUI] saving progress: save_id=%d crown=%d percent=%d diamond=%d" % [save_id, LevelManager.crown, LevelManager.percent, LevelManager.gem])
 	PopupToast.show("正在保存游戏进度...", 2.0)
-	ProgressStore.update_level(str(save_id), LevelManager.crown, LevelManager.percent, LevelManager.diamond)
+	ProgressStore.update_level(str(save_id), LevelManager.crown, LevelManager.percent, LevelManager.gem)
 	CloudArchiveService.queue_save("game_progress")
 
 func _on_cloud_saved(update_time: String) -> void:
@@ -143,7 +143,7 @@ func _update_ui_data() -> void:
 	_update_user_display()
 
 	# 2. 底部数据卡片
-	diamond_val.text = "%d/10" % LevelManager.diamond
+	diamond_val.text = "%d/10" % LevelManager.gem
 	progress_val.text = "%d%%" % LevelManager.percent
 	
 	var music_player = p.get_node_or_null("MusicPlayer") as AudioStreamPlayer
@@ -261,7 +261,7 @@ func _on_back_pressed() -> void:
 	LevelManager.is_end = false
 	LevelManager.is_relive = false
 	LevelManager.camera_checkpoint.restore_pending = false
-	LevelManager.diamond = 0
+	LevelManager.gem = 0
 	LevelManager.crown = 0
 	LevelManager.percent = 0
 	get_tree().change_scene_to_file("res://Scenes/LevelManager.tscn")

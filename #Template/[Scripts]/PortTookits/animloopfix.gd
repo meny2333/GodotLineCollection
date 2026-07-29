@@ -12,7 +12,11 @@ extends Node
 @export var 执行批量设置: bool = false:
 	set(value):
 		if value and Engine.is_editor_hint():
-			_batch_process()
+			var undo_redo: EditorUndoRedoManager = EditorInterface.get_editor_undo_redo()
+			undo_redo.create_action("批量设置动画")
+			undo_redo.add_do_method(self, "_batch_process")
+			undo_redo.add_undo_method(self, "_undo_batch_process")
+			undo_redo.commit_action(false)
 			执行批量设置 = false
 			notify_property_list_changed()
 
@@ -28,7 +32,9 @@ extends Node
 				_batch_stop()
 				停止测试 = false
 
-func _ready():
+var _undo_data: Array[Dictionary] = []
+
+func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
 	
@@ -38,20 +44,35 @@ func _ready():
 		_batch_play()
 
 ## 核心：批量设置 autoplay = 节点名称
-func _batch_process():
-	var players = _find_animation_players()
+func _batch_process() -> void:
+	var players: Array[AnimationPlayer] = _find_animation_players()
 	if players.is_empty():
 		push_warning("[批量动画] 未找到匹配 '%s' 的 AnimationPlayer" % node_pattern)
 		return
+	
+	# 保存撤销数据
+	_undo_data.clear()
+	for player in players:
+		var player_data: Dictionary = {
+			"player": player,
+			"autoplay": player.autoplay,
+			"loop_modes": {}
+		}
+		var anim_list: PackedStringArray = player.get_animation_list()
+		for anim_name in anim_list:
+			var anim: Animation = player.get_animation(anim_name)
+			if anim:
+				player_data.loop_modes[anim_name] = anim.loop_mode
+		_undo_data.append(player_data)
 	
 	for player in players:
 		# 关键：autoplay 设置为该 AnimationPlayer 的节点名称
 		player.autoplay = StringName(player.name)
 		
 		# 批量修改循环模式
-		var anim_list = player.get_animation_list()
+		var anim_list: PackedStringArray = player.get_animation_list()
 		for anim_name in anim_list:
-			var anim = player.get_animation(anim_name)
+			var anim: Animation = player.get_animation(anim_name)
 			if anim:
 				anim.loop_mode = target_loop_mode
 		
@@ -66,13 +87,28 @@ func _batch_process():
 	if Engine.is_editor_hint():
 		EditorInterface.mark_scene_as_unsaved()
 
+func _undo_batch_process() -> void:
+	for data in _undo_data:
+		var player: AnimationPlayer = data.player
+		if not is_instance_valid(player):
+			continue
+		player.autoplay = data.autoplay
+		var anim_list: PackedStringArray = player.get_animation_list()
+		for anim_name in anim_list:
+			if anim_name in data.loop_modes:
+				var anim: Animation = player.get_animation(anim_name)
+				if anim:
+					anim.loop_mode = data.loop_modes[anim_name]
+		print("[撤销动画] %s -> autoplay='%s'" % [player.name, player.autoplay])
+	_undo_data.clear()
+
 ## 查找匹配的 AnimationPlayer
 func _find_animation_players() -> Array[AnimationPlayer]:
 	var result: Array[AnimationPlayer] = []
 	_collect_recursive(get_tree().root if is_inside_tree() else self, result)
 	return result
 
-func _collect_recursive(node: Node, result: Array[AnimationPlayer]):
+func _collect_recursive(node: Node, result: Array[AnimationPlayer]) -> void:
 	if node is AnimationPlayer and node.name.match(node_pattern):
 		result.append(node)
 	
@@ -80,8 +116,8 @@ func _collect_recursive(node: Node, result: Array[AnimationPlayer]):
 		_collect_recursive(child, result)
 
 ## 播放（使用 autoplay 设置的名称，即节点名）
-func _batch_play():
-	var players = _find_animation_players()
+func _batch_play() -> void:
+	var players: Array[AnimationPlayer] = _find_animation_players()
 	for player in players:
 		# 播放 autoplay 中指定的动画（即节点名称）
 		if player.autoplay != "":
@@ -89,11 +125,11 @@ func _batch_play():
 			print("[批量播放] %s: %s" % [player.name, player.autoplay])
 		else:
 			# 如果没有设置 autoplay，则播放第一个可用动画
-			var first_anim = player.get_animation_list()
+			var first_anim: PackedStringArray = player.get_animation_list()
 			if first_anim.size() > 0:
 				player.play(first_anim[0])
 
-func _batch_stop():
-	var players = _find_animation_players()
+func _batch_stop() -> void:
+	var players: Array[AnimationPlayer] = _find_animation_players()
 	for player in players:
 		player.stop()

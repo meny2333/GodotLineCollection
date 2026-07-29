@@ -1,5 +1,5 @@
 @tool
-extends BaseTrigger
+extends Node
 ## KillPlayer - 接触即死触发器
 ## 当玩家进入触发区域时立即死亡
 ## 三种模式：Hit（撞墙）/ Drowned（落水）/ Border（出图）
@@ -10,8 +10,8 @@ enum DieReason {
 	Border,    # 出图 — 无音效
 }
 
-const HIT_CLIP := preload("res://#Template/[Resources]/Hit.wav")
-const DROWNED_CLIP := preload("res://#Template/[Resources]/WaterDie.wav")
+const HIT_CLIP: AudioStream = preload("res://#Template/[Resources]/Hit.wav")
+const DROWNED_CLIP: AudioStream = preload("res://#Template/[Resources]/WaterDie.wav")
 
 @export var reason: DieReason = DieReason.Drowned
 
@@ -21,11 +21,11 @@ const DROWNED_CLIP := preload("res://#Template/[Resources]/WaterDie.wav")
 ## 自定义死亡音效（留空则使用 reason 默认音效）
 @export var custom_death_clip: AudioStream
 
-func _on_triggered(body: Node3D) -> void:
+func trigger(body: Node3D) -> void:
 	if LevelManager.GameState != LevelManager.GameStatus.Playing:
 		return
-	var player := body as Player
-	if player and player.is_live:
+	var player: Player = body as Player
+	if player and player.is_live and not player.no_death:
 		if no_revive:
 			LevelManager.checkpoint_count = 0
 			LevelManager.crown = 0

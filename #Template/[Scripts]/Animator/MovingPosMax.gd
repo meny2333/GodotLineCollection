@@ -1,5 +1,5 @@
 @tool
-extends BaseTrigger
+extends Node3D
 ## MovingPosMaxTrigger - 序列位置移动触发器
 ## 当玩家进入时,让目标物体沿路径点序列移动
 ## 支持设置多个路径点、不同的移动时间和等待时间
@@ -21,40 +21,59 @@ extends BaseTrigger
 ## 自定义触发信号(保留向后兼容)
 signal on_animation_start
 signal on_animation_end
-signal hit_the_line
 
-# ---------- 工具按钮 ----------
-@export_tool_button("抓取当前为起点") var set_start_action = func():
-	var target = animated_object if animated_object else self
-	print("当前起点(节点世界坐标): ", target.global_position)
+@export_tool_button("抓取路径点") var set_end_action: Callable = func() -> void:
+	_grab_waypoint()
 
-@export_tool_button("抓取当前为终点") var set_end_action = func():
-	var target = animated_object if animated_object else self
-	target_positions.append(target.global_position)
-	move_durations.append(duration)
-	wait_times.append(0.0)
-	print("终点已添加: ", target_positions[-1])
-
-@export_tool_button("预览播放") var preview_play_action = func():
+@export_tool_button("预览播放") var preview_play_action: Callable = func() -> void:
 	if Engine.is_editor_hint():
 		play_sequence()
+
+func _grab_waypoint() -> void:
+	var target: Node3D = animated_object if animated_object else self
+	var new_pos: Vector3 = target.global_position
+	var old_positions: Array[Vector3] = target_positions.duplicate()
+	var old_durations: Array[float] = move_durations.duplicate()
+	var old_waits: Array[float] = wait_times.duplicate()
+	var new_positions: Array[Vector3] = old_positions.duplicate()
+	var new_durations: Array[float] = old_durations.duplicate()
+	var new_waits: Array[float] = old_waits.duplicate()
+
+	new_positions.append(new_pos)
+	new_durations.append(duration)
+	new_waits.append(0.0)
+
+	var undo_redo: EditorUndoRedoManager = EditorInterface.get_editor_undo_redo()
+	undo_redo.create_action("抓取路径点")
+	undo_redo.add_do_property(self, "target_positions", new_positions)
+	undo_redo.add_do_property(self, "move_durations", new_durations)
+	undo_redo.add_do_property(self, "wait_times", new_waits)
+	undo_redo.add_undo_property(self, "target_positions", old_positions)
+	undo_redo.add_undo_property(self, "move_durations", old_durations)
+	undo_redo.add_undo_property(self, "wait_times", old_waits)
+	undo_redo.commit_action()
+
+	print("目标位置: ", new_pos)
+	print("当前路径点数组: ", target_positions)
+	notify_property_list_changed()
+
+func _remove_last_waypoint() -> void:
+	if not target_positions.is_empty():
+		target_positions = target_positions.slice(0, -1)   # 或 .duplicate() 后 pop
+		move_durations = move_durations.slice(0, -1)
+		wait_times = wait_times.slice(0, -1)
+		print("已撤销最后一个路径点")
+		notify_property_list_changed()
 
 # ---------- 核心逻辑 ----------
 
 func _ready() -> void:
-	# 调用父类的 _ready (处理网格隐藏和信号连接)
-	super._ready()
-	
-	# 编辑器模式下跳过游戏逻辑
 	if Engine.is_editor_hint():
 		return
-	
-	# 连接自定义信号
-	hit_the_line.connect(play_sequence)
 
-func _on_triggered(_body: Node3D) -> void:
-	# 发射自定义信号(供其他脚本监听)
-	hit_the_line.emit()
+## 由父节点 BaseTrigger 调用的入口方法
+func trigger(_body: Node3D) -> void:
+	play_sequence()
 
 func play_sequence() -> void:
 	if target_positions.is_empty():
@@ -62,19 +81,19 @@ func play_sequence() -> void:
 		return
 	
 	on_animation_start.emit()
-	var target = animated_object if animated_object else self
-	var original_pos = target.global_position
+	var target: Node3D = animated_object if animated_object else self
+	var original_pos: Vector3 = target.global_position
 	
-	var tween = create_tween()
+	var tween: Tween = create_tween()
 	
 	# 从初始位置出发,依次移动到每个路径点
 	for i in range(target_positions.size()):
-		var pos = target_positions[i]
-		var move_time = duration
+		var pos: Vector3 = target_positions[i]
+		var move_time: float = duration
 		if i < move_durations.size():
 			move_time = move_durations[i]
 		
-		var wait_time = 0.0
+		var wait_time: float = 0.0
 		if i < wait_times.size():
 			wait_time = wait_times[i]
 		
@@ -89,5 +108,5 @@ func play_sequence() -> void:
 	)
 	print("动画开始播放,路径点数: ", target_positions.size())
 
-func play_():
+func play_() -> void:
 	play_sequence()

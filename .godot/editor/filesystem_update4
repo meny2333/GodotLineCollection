@@ -1,11 +1,1 @@
 res://Scenes/LevelManager.tscn
-res://addons/godot_mcp/mcp_server_native.gd
-res://addons/godot_mcp/native_mcp/mcp_http_server.gd
-res://addons/godot_mcp/native_mcp/mcp_server_core.gd
-res://addons/godot_mcp/runtime/mcp_runtime_probe.gd
-res://addons/godot_mcp/ui/mcp_panel_native.gd
-res://#Template/[Materials]/CrystalGradientMaterial.tres
-res://#Template/[Resources]/GemFragment.tscn
-res://Scripts/CustomGameUI.gd
-res://pck_levels/level_list.tres
-res://#Template/[Materials]/Diamond.tres

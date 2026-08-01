@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4rc47thiqgln"
 path.s3tc="res://.godot/imported/Spirit.png-882c07cf0784d1037a57a9fcab147f07.s3tc.ctex"
-path.etc2="res://.godot/imported/Spirit.png-882c07cf0784d1037a57a9fcab147f07.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://#Template/[Resources]/Spirit.png"
-dest_files=["res://.godot/imported/Spirit.png-882c07cf0784d1037a57a9fcab147f07.s3tc.ctex", "res://.godot/imported/Spirit.png-882c07cf0784d1037a57a9fcab147f07.etc2.ctex"]
+dest_files=["res://.godot/imported/Spirit.png-882c07cf0784d1037a57a9fcab147f07.s3tc.ctex"]
 
 [params]
 

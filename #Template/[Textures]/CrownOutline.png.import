@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://ibq6myi7ifde"
 path.s3tc="res://.godot/imported/CrownOutline.png-2f39a8570dede7852b9e9bda84bcf77d.s3tc.ctex"
+path.etc2="res://.godot/imported/CrownOutline.png-2f39a8570dede7852b9e9bda84bcf77d.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://#Template/[Textures]/CrownOutline.png"
-dest_files=["res://.godot/imported/CrownOutline.png-2f39a8570dede7852b9e9bda84bcf77d.s3tc.ctex"]
+dest_files=["res://.godot/imported/CrownOutline.png-2f39a8570dede7852b9e9bda84bcf77d.s3tc.ctex", "res://.godot/imported/CrownOutline.png-2f39a8570dede7852b9e9bda84bcf77d.etc2.ctex"]
 
 [params]
 

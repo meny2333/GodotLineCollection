@@ -4,15 +4,16 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cc55q03813qhf"
 path.s3tc="res://.godot/imported/0.png-64d6f79b4bd6c094314260cbe198596a.s3tc.ctex"
+path.etc2="res://.godot/imported/0.png-64d6f79b4bd6c094314260cbe198596a.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://#Template/[Resources]/Gizmos/Directions/0.png"
-dest_files=["res://.godot/imported/0.png-64d6f79b4bd6c094314260cbe198596a.s3tc.ctex"]
+dest_files=["res://.godot/imported/0.png-64d6f79b4bd6c094314260cbe198596a.s3tc.ctex", "res://.godot/imported/0.png-64d6f79b4bd6c094314260cbe198596a.etc2.ctex"]
 
 [params]
 

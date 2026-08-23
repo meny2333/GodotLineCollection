@@ -1,8 +1,8 @@
 [gd_resource type="Resource" script_class="MenuLevelList" format=3 uid="uid://c3clyhdb83tuh"]
 
 [ext_resource type="Script" uid="uid://c0ibf0fotopcm" path="res://Scripts/MenuLevelData.gd" id="1_2jgfj"]
-[ext_resource type="Texture2D" uid="uid://c6y2vppvx5060" path="res://#Template/[Resources]/BlackCrown_Light.png" id="2_2jgfj"]
-[ext_resource type="AudioStream" uid="uid://dh17kvleseoac" path="res://#Template/[Music]/Sample.mp3" id="3_ce8ow"]
+[ext_resource type="Texture2D" uid="uid://bvwwwofsragrp" path="res://#Template/[Textures]/CrownInside.png" id="2_2jgfj"]
+[ext_resource type="AudioStream" uid="uid://dvuyngpexrtar" path="res://#Template/[Music]/LevelDefault.mp3" id="3_ce8ow"]
 [ext_resource type="Texture2D" uid="uid://lh5f3b3xfwsd" path="res://pck_levels/inv/inv.png" id="4_ce8ow"]
 [ext_resource type="Script" uid="uid://d3m75qswtqdny" path="res://Scripts/MenuLevelList.gd" id="4_v7aw8"]
 [ext_resource type="AudioStream" uid="uid://yhticobykusw" path="res://pck_levels/inv/TheInvertedWorld.mp3" id="5_v7aw8"]

@@ -1,75 +1,88 @@
+class_name SetActive
 extends Node
 
 ## SetActiveTrigger - 激活/禁用触发器
 ## 触发时激活/禁用指定节点，支持复活时恢复状态
 
-@export_group("激活设置")
-@export var active_on_awake: bool = false
+static var instance: SetActive = null
+
+@export var activeOnAwake: bool = false
 @export var actives: Array[SingleActive] = []
 
-var _revive_states: Array[Dictionary] = []
-var _checkpoint_index: int = 0
+var revives: Array[Dictionary] = []
+var index: int = 0
+
+func _enter_tree() -> void:
+	if instance == null:
+		instance = self
 
 func _ready() -> void:
-	if active_on_awake:
-		_apply_all_actives()
-	
+	instance = self
+	add_to_group("checkpoint_actives")
+	if activeOnAwake:
+		SetActiveFunc()
+
 	LevelManager.add_revive_listener(_on_revive)
 
-func trigger(_body: Node3D) -> void:
-	if active_on_awake:
+func trigger(body: Node3D) -> void:
+	if activeOnAwake:
 		return
-	
-	_checkpoint_index = LevelManager.checkpoint_count
-	_save_revive_states()
-	_apply_all_actives()
+	captureCheckpointState()
+	SetActiveFunc()
 
-func _apply_all_actives() -> void:
-	for active_config in actives:
-		if active_config and active_config.target:
-			var target: Node = get_node_or_null(active_config.target)
-			if target:
-				if target is Node3D:
-					target.visible = active_config.active
-				elif target is CanvasItem:
-					target.visible = active_config.active
+func captureCheckpointState() -> void:
+	if activeOnAwake:
+		return
+	index = LevelManager.checkpointCount
+	_saveReviveStates()
 
-func _save_revive_states() -> void:
-	_revive_states.clear()
-	for active_config in actives:
-		if active_config and active_config.target:
-			var target: Node = get_node_or_null(active_config.target)
+func SetActiveFunc() -> void:
+	for activeConfig: SingleActive in actives:
+		if activeConfig and activeConfig.target:
+			var target: Node = get_node_or_null(activeConfig.target)
 			if target:
-				var original_visible: bool = false
-				if target is Node3D:
-					original_visible = target.visible
-				elif target is CanvasItem:
-					original_visible = target.visible
-				
-				_revive_states.append({
-					"target": active_config.target,
-					"original_visible": original_visible,
-					"dont_revive": active_config.dont_revive
+				SetNodeActive(target, activeConfig.active)
+
+func _saveReviveStates() -> void:
+	revives.clear()
+	for activeConfig: SingleActive in actives:
+		if activeConfig and activeConfig.target:
+			var target: Node = get_node_or_null(activeConfig.target)
+			if target:
+				var originalVisible: bool = false
+				if target is Node3D or target is CanvasItem:
+					originalVisible = target.visible
+
+				revives.append({
+					"target": activeConfig.target,
+					"originalVisible": originalVisible,
+					"dontRevive": activeConfig.dontRevive
 				})
 
 func _on_revive() -> void:
 	if not is_instance_valid(self):
 		return
-	LevelManager.CompareCheckpointIndex(_checkpoint_index, func():
+	LevelManager.CompareCheckpointIndex(index, func() -> void:
 		if not is_instance_valid(self):
 			return
-		for state in _revive_states:
-			if not state.get("dont_revive", false):
-				var target_path: NodePath = state.get("target", NodePath(""))
-				var target: Node = get_node_or_null(target_path)
+		for state: Dictionary in revives:
+			if not state.get("dontRevive", false):
+				var targetPath: NodePath = state.get("target", NodePath(""))
+				var target: Node = get_node_or_null(targetPath)
 				if target:
-					var original_visible: bool = state.get("original_visible", false)
-					if target is Node3D:
-						target.visible = original_visible
-					elif target is CanvasItem:
-						target.visible = original_visible
+					var originalVisible: bool = state.get("originalVisible", false)
+					SetNodeActive(target, originalVisible)
 	)
 
+static func SetNodeActive(node: Node, active: bool) -> void:
+	if not is_instance_valid(node):
+		return
+	if node is Node3D or node is CanvasItem:
+		node.visible = active
+	node.process_mode = Node.PROCESS_MODE_INHERIT if active else Node.PROCESS_MODE_DISABLED
+
 func _exit_tree() -> void:
+	if instance == self:
+		instance = null
 	if not Engine.is_editor_hint():
 		LevelManager.remove_revive_listener(_on_revive)

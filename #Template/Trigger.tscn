@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://b5hb8j8w782ki"]
 
-[ext_resource type="Script" uid="uid://bb5lh2cc1yfy4" path="res://#Template/[Scripts]/Trigger/Single/BaseTrigger.gd" id="1_hpm7v"]
+[ext_resource type="Script" uid="uid://bb5lh2cc1yfy4" path="res://#Template/[Scripts]/Trigger/BaseTrigger.gd" id="1_hpm7v"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_e2kce"]
 
 [node name="Trigger" type="Area3D" unique_id=608483111]
-transform = Transform3D(2.5, 0, 0, 0, 2.5, 0, 0, 0, 2.5, 0, 0, 0)
+monitorable = false
 script = ExtResource("1_hpm7v")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1276946581]
@@ -14,7 +14,3 @@ debug_color = Color(0, 1, 0, 1)
 
 [node name="Marker3D" type="Marker3D" parent="." unique_id=414536342]
 gizmo_extents = 0.5
-
-[node name="Comp1" type="Node3D" parent="." unique_id=185958791]
-
-[connection signal="body_entered" from="." to="." method="_on_body_entered"]

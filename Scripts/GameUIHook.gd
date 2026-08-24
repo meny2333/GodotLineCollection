@@ -6,8 +6,8 @@ extends Node
 ## 替换后的 UI 实例引用
 var _replacement_ui: Control = null
 
-## 目标节点名（与 GAMEUI.tscn 根节点名一致）
-const TARGET_NODE_NAME := "gameui"
+## 目标节点名集合（旧模板 GAMEUI.tscn 根节点为 gameui，新模板 LevelUI.tscn 为 LevelUI）
+const TARGET_NODE_NAMES: Array[String] = ["gameui", "LevelUI"]
 
 ## 自定义 UI 场景路径（可选，也可以用代码创建）
 const CUSTOM_UI_SCENE := "res://Scenes/CustomGameUI.tscn"
@@ -15,12 +15,12 @@ const CUSTOM_UI_SCENE := "res://Scenes/CustomGameUI.tscn"
 func _ready() -> void:
 	# 监听节点添加事件
 	get_tree().node_added.connect(_on_node_added)
-	print("[GameUIHook] 已启动，监听 gameui 节点...")
+	print("[GameUIHook] 已启动，监听 gameui/LevelUI 节点...")
 
 
 func _on_node_added(node: Node) -> void:
 	# 检测目标节点
-	if node.name == TARGET_NODE_NAME and node is Control:
+	if node is Control and node.name in TARGET_NODE_NAMES:
 		# 延迟一帧确保节点完全初始化
 		_replace_deferred.call_deferred(node)
 

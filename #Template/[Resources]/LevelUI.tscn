@@ -1,0 +1,392 @@
+[gd_scene format=3 uid="uid://wx3awwdt8xdy"]
+
+[ext_resource type="Script" uid="uid://qco7fgruvgdp" path="res://#Template/[Scripts]/GUI/LevelUI.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cm6t345rqeaxk" path="res://#Template/[Textures]/Sprites.png" id="2_atlas"]
+[ext_resource type="FontFile" uid="uid://cofd0gpguc54l" path="res://#Template/[Resources]/MiSans-Normal.ttf" id="3_misans"]
+[ext_resource type="FontFile" uid="uid://cfyw78f6iowmi" path="res://#Template/[Resources]/CaviarDreams.TTF" id="4_caviar"]
+
+[sub_resource type="StyleBoxFlat" id="Style_transparent"]
+bg_color = Color(0, 0, 0, 0)
+
+[sub_resource type="StyleBoxFlat" id="Style_frame_hover"]
+bg_color = Color(1, 1, 1, 0.08)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="Theme" id="Theme_level_ui"]
+default_font = ExtResource("3_misans")
+default_font_size = 22
+Button/styles/focus = SubResource("Style_transparent")
+Button/styles/hover = SubResource("Style_frame_hover")
+Button/styles/normal = SubResource("Style_frame_hover")
+Button/styles/pressed = SubResource("Style_frame_hover")
+
+[sub_resource type="StyleBoxFlat" id="Style_progress_frame"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="AtlasTexture" id="Atlas_fill"]
+atlas = ExtResource("2_atlas")
+region = Rect2(305, 0, 64, 64)
+
+[sub_resource type="AtlasTexture" id="Atlas_gem"]
+atlas = ExtResource("2_atlas")
+region = Rect2(215, 0, 89, 96)
+
+[sub_resource type="AtlasTexture" id="Atlas_restart"]
+atlas = ExtResource("2_atlas")
+region = Rect2(242, 238, 161, 135)
+
+[sub_resource type="AtlasTexture" id="Atlas_switch"]
+atlas = ExtResource("2_atlas")
+region = Rect2(425, 0, 48, 84)
+
+[sub_resource type="AtlasTexture" id="Atlas_continue"]
+atlas = ExtResource("2_atlas")
+region = Rect2(244, 374, 129, 148)
+
+[node name="LevelUI" type="Control" unique_id=334331106]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_level_ui")
+script = ExtResource("1_script")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=1979518543]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.639216)
+
+[node name="NormalPage" type="Control" parent="." unique_id=1351697362]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="title" type="Label" parent="NormalPage" unique_id=1832489729]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 48.0
+offset_right = -20.0
+offset_bottom = 116.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("4_caviar")
+theme_override_font_sizes/font_size = 48
+text = "Level Name"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="percentage" type="Label" parent="NormalPage" unique_id=74203880]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 100.0
+offset_top = 142.0
+offset_right = -100.0
+offset_bottom = 198.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("4_caviar")
+theme_override_font_sizes/font_size = 38
+text = "0%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressFrame" type="Panel" parent="NormalPage" unique_id=1878077528]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 218.0
+offset_right = 150.0
+offset_bottom = 238.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_progress_frame")
+
+[node name="Fill" type="TextureRect" parent="NormalPage/ProgressFrame" unique_id=300229016]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("Atlas_fill")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Collectible" type="HBoxContainer" parent="NormalPage" unique_id=122511902]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -90.0
+offset_top = 258.0
+offset_right = 90.0
+offset_bottom = 326.0
+grow_horizontal = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="gem_icon" type="TextureRect" parent="NormalPage/Collectible" unique_id=1516213311]
+custom_minimum_size = Vector2(54, 58)
+layout_mode = 2
+texture = SubResource("Atlas_gem")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="diamond" type="Label" parent="NormalPage/Collectible" unique_id=1947938205]
+custom_minimum_size = Vector2(88, 58)
+layout_mode = 2
+theme_override_fonts/font = ExtResource("4_caviar")
+theme_override_font_sizes/font_size = 30
+text = "0/10"
+vertical_alignment = 1
+
+[node name="replay" type="Button" parent="NormalPage" unique_id=1391041470]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -141.0
+offset_top = -104.0
+offset_right = 141.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Icon" type="TextureRect" parent="NormalPage/replay" unique_id=372475208]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -43.0
+offset_top = -30.0
+offset_right = 43.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("Atlas_restart")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="RevivePage" type="Control" parent="." unique_id=1459890174]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="ReviveBackground" type="ColorRect" parent="RevivePage" unique_id=1587456565]
+layout_mode = 1
+anchors_preset = 14
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_top = -135.0
+offset_bottom = 135.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.517647)
+
+[node name="AskingText" type="Label" parent="RevivePage" unique_id=186794411]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -110.0
+offset_right = 300.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 24
+text = "是否从上一个检查点复活？
+您将会失去所有已获得的收集物"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="percentage" type="Label" parent="RevivePage" unique_id=1414117705]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 100.0
+offset_top = 118.0
+offset_right = -100.0
+offset_bottom = 168.0
+grow_horizontal = 2
+theme_override_fonts/font = ExtResource("4_caviar")
+theme_override_font_sizes/font_size = 34
+text = "0%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressFrame" type="Panel" parent="RevivePage" unique_id=997976581]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 182.0
+offset_right = 150.0
+offset_bottom = 202.0
+grow_horizontal = 2
+theme_override_styles/panel = SubResource("Style_progress_frame")
+
+[node name="Fill" type="TextureRect" parent="RevivePage/ProgressFrame" unique_id=547855230]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 6.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("Atlas_fill")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="cancel" type="Button" parent="RevivePage" unique_id=564580003]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -177.0
+offset_top = -104.0
+offset_right = -105.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Icon" type="TextureRect" parent="RevivePage/cancel" unique_id=1982457629]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -17.0
+offset_top = -30.0
+offset_right = 17.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("Atlas_switch")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="revive" type="Button" parent="RevivePage" unique_id=871386593]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -69.0
+offset_top = -104.0
+offset_right = 132.0
+offset_bottom = -32.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="Icon" type="TextureRect" parent="RevivePage/revive" unique_id=452794512]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -34.0
+offset_right = 32.0
+offset_bottom = 34.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("Atlas_continue")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="back" type="Button" parent="." unique_id=859845674]
+layout_mode = 1
+offset_left = 22.0
+offset_top = 20.0
+offset_right = 74.0
+offset_bottom = 82.0
+tooltip_text = "退出"
+
+[node name="Icon" type="TextureRect" parent="back" unique_id=1090219207]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -13.0
+offset_top = -24.0
+offset_right = 13.0
+offset_bottom = 24.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("Atlas_switch")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="HideScreen" type="ColorRect" parent="." unique_id=953599403]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
+[connection signal="pressed" from="NormalPage/replay" to="." method="_on_gamereplay_pressed"]
+[connection signal="pressed" from="RevivePage/cancel" to="." method="_on_cancel_revive_pressed"]
+[connection signal="pressed" from="RevivePage/revive" to="." method="_on_revive_pressed"]
+[connection signal="pressed" from="back" to="." method="_on_back_pressed"]

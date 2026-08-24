@@ -1,9 +1,12 @@
 [gd_scene format=4 uid="uid://dup02jc1bhxfc"]
 
-[ext_resource type="Script" uid="uid://cl7pyxuxgg61g" path="res://#Template/[Scripts]/Trigger/Single/HeartCheckpoint.gd" id="1_oq3w0"]
+[ext_resource type="Script" uid="uid://cl7pyxuxgg61g" path="res://#Template/[Scripts]/Trigger/HeartCheckpoint.gd" id="1_oq3w0"]
 [ext_resource type="Material" uid="uid://ktbkvswrq32a" path="res://#Template/[Materials]/Checkpoint1.tres" id="2_oq3w0"]
+[ext_resource type="Script" uid="uid://bb5lh2cc1yfy4" path="res://#Template/[Scripts]/Trigger/BaseTrigger.gd" id="3_base"]
+[ext_resource type="Script" uid="uid://dqs5yftnojwpe" path="res://#Template/[Scripts]/Level/DisableInPlayMode.gd" id="10_dipm"]
 
 [sub_resource type="BoxShape3D" id="2"]
+size = Vector3(1, 5, 10)
 
 [sub_resource type="Animation" id="Animation_8fven"]
 length = 0.001
@@ -102,23 +105,33 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_08x2n")
 
-[node name="HeartCheckpoint" type="Area3D" unique_id=1805653336]
+[node name="HeartCheckpoint" type="Node3D" unique_id=1805653336]
+
+[node name="Area3D" type="Area3D" parent="." unique_id=145593225]
 collision_layer = 0
+script = ExtResource("3_base")
+requirePlaying = false
+
+[node name="HeartCheckpoint" type="Node3D" parent="Area3D" unique_id=386192853 node_paths=PackedStringArray("rotator")]
 script = ExtResource("1_oq3w0")
+rotator = NodePath("../../Rotator")
 AutoRecord = true
 
-[node name="CheckpointTrigger" type="CollisionShape3D" parent="." unique_id=18434010]
-transform = Transform3D(7.071068, 0, 1.4142135, 0, 5, 0, -7.071068, 0, 1.4142135, 0, 0, 0)
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1975767322]
 shape = SubResource("2")
+debug_color = Color(0, 1, 0, 1)
 
-[node name="Marker3D" type="Marker3D" parent="CheckpointTrigger" unique_id=626349944]
+[node name="Marker3D" type="Marker3D" parent="Area3D" unique_id=260536035]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 0, 0, 0)
+gizmo_extents = 0.5
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1721480882]
 libraries/ = SubResource("AnimationLibrary_pds1l")
 
 [node name="RevivePosition" type="MeshInstance3D" parent="." unique_id=1500499588]
-mesh = SubResource("BoxMesh_t50w7")
+
+[node name="DisableInPlayMode" type="Node" parent="RevivePosition"]
+script = ExtResource("10_dipm")
 
 [node name="Rotator" type="Node3D" parent="." unique_id=1538698628]
 transform = Transform3D(0.01, 0, 0, 0, 0.01, 0, 0, 0, 0.01, 0, 5, 0)
@@ -128,5 +141,3 @@ mesh = SubResource("ArrayMesh_yroa6")
 
 [node name="Frame" type="MeshInstance3D" parent="Rotator" unique_id=1876299699]
 mesh = SubResource("ArrayMesh_jlccs")
-
-[connection signal="body_entered" from="." to="." method="_on_Crown_body_entered"]

@@ -9,24 +9,48 @@ static var Instance: AutoPlayController
 
 var _holder: Node3D
 var _triggers: Array[Area3D] = []
+var initInProgress: bool = false
+var _initialized: bool = false
+var requestedActive: bool = false
 
 func _ready() -> void:
 	Instance = self
-	# 等场景所有节点 _ready() 完成后再初始化（与 Unity 版一致，确保 GuidanceController 已就绪）
-	get_tree().process_frame.connect(_init_triggers, CONNECT_ONE_SHOT)
+	requestedActive = enable
+	# 等场景切换和其他节点的 _ready() 完成后再读取 current_scene。
+	call_deferred("_init_triggers")
 
 func _init_triggers() -> void:
-	if not GuidanceController.Instance or not GuidanceController.Instance.box_holder:
-		push_warning("[AutoPlayController] GuidanceController 或 box_holder 未设置")
+	if initInProgress or _initialized:
+		return
+	initInProgress = true
+	await get_tree().process_frame
+	if not is_inside_tree():
+		initInProgress = false
 		return
 
-	var boxes: Array[Node] = GuidanceController.Instance.box_holder.get_children()
+	var currentScene: Node = get_tree().current_scene
+	if not is_instance_valid(currentScene):
+		_queue_init_retry()
+		return
+
+	var guidanceController: GuidanceController = GuidanceController.Instance
+	if not is_instance_valid(guidanceController):
+		_queue_init_retry()
+		return
+	var boxHolder: Node3D = guidanceController.boxHolder
+	if not is_instance_valid(boxHolder):
+		_queue_init_retry()
+		return
+
+	var boxes: Array[Node] = boxHolder.get_children()
 	if boxes.is_empty():
+		initInProgress = false
+		_initialized = true
 		return
 
 	_holder = Node3D.new()
 	_holder.name = "AutoPlayHolder"
-	get_tree().current_scene.add_child(_holder)
+	currentScene.add_child(_holder)
 
 	# 从第二个 box 开始创建触发器（与 Unity 版一致，跳过第 0 个）
 	for i in range(1, boxes.size()):
@@ -36,7 +60,14 @@ func _init_triggers() -> void:
 		var trigger: Area3D = _create_trigger(box.global_position, i)
 		_triggers.append(trigger)
 
-	set_holder(enable)
+	initInProgress = false
+	_initialized = true
+	SetHolder(requestedActive)
+
+func _queue_init_retry() -> void:
+	initInProgress = false
+	if is_inside_tree():
+		call_deferred("_init_triggers")
 
 func _create_trigger(pos: Vector3, index: int) -> Area3D:
 	var area: Area3D = Area3D.new()
@@ -56,10 +87,18 @@ func _create_trigger(pos: Vector3, index: int) -> Area3D:
 	area.global_position = pos
 	return area
 
-func set_holder(active: bool) -> void:
+func SetHolder(active: bool) -> void:
+	requestedActive = active
 	if _holder:
 		_holder.visible = active
 		for trigger in _triggers:
 			if trigger is Area3D:
+				if trigger.has_method("set_active"):
+					trigger.call("set_active", active)
 				trigger.set_deferred("monitoring", active)
 				trigger.set_deferred("monitorable", active)
+				if active and trigger.has_method("refresh_tracking"):
+					trigger.call_deferred("refresh_tracking")
+
+func get_requested_active() -> bool:
+	return requestedActive

@@ -3,93 +3,91 @@ class_name GuidanceController
 
 static var Instance: GuidanceController
 
-@export var create_boxes: bool = false
-@export var create_lines: bool = true
-@export var box_holder: Node3D
-@export var guidance_color: Color = Color.WHITE
-@export var line_gap: float = 0.2
-@export var box_size_y: float = 1.0
+@export var createBoxes: bool = false
+@export var createLines: bool = true
+@export var boxHolder: Node3D
+@export var guidanceBoxColor: Color = Color.WHITE
+@export var lineGap: float = 0.2
 
-var _player: CharacterBody3D
+var _player: Player
+var _player_transform: Node3D
 var _boxes: Array[Node3D] = []
 var _holder: Node3D
 var _id: int = 0
 var _box_scene: PackedScene
+var _box_size_y: float = 1.0
 var _started: bool = false
+var _original_created: bool = false
+var _forward: float = 0.0
 
 func _ready() -> void:
 	Instance = self
 	_id = 0
 	_box_scene = load("res://#Template/[Resources]/GuidanceBox.tscn")
-	set_process(false)  ## 默认关闭，用信号驱动
-	if create_boxes:
+	if _box_scene:
+		var boxProbe: Node3D = _box_scene.instantiate() as Node3D
+		if boxProbe:
+			_box_size_y = boxProbe.scale.y
+			boxProbe.free()
+	if createBoxes:
 		_holder = Node3D.new()
 		_holder.name = "GuidanceBoxHolder"
-		get_tree().current_scene.add_child.call_deferred(_holder)
-	if box_holder:
-		for child in box_holder.get_children():
+		get_tree().current_scene.add_child(_holder)
+	if boxHolder:
+		for child in boxHolder.get_children():
 			if child is Node3D:
 				_boxes.append(child)
 	for b in _boxes:
-		_set_color(b, guidance_color)
-	if create_lines and not _boxes.is_empty():
+		_set_color(b, guidanceBoxColor)
+	if createLines:
 		_generate_lines()
-	# 用信号驱动替代轮询
-	if Player.instance:
-		_connect_player_signals()
-	else:
-		# Player 还没就绪，等一帧
-		await get_tree().process_frame
-		if Player.instance:
-			_connect_player_signals()
+	set_process(true)
 
-func _connect_player_signals() -> void:
-	_player = Player.instance
-	if not _player:
-		return
-	if create_boxes:
-		_player.on_player_start.connect(_on_player_start)
+func _process(_delta: float) -> void:
+	if not is_instance_valid(_player):
+		_player = Player.instance
+		if not is_instance_valid(_player):
+			return
+		_player_transform = _player
 
-func _on_player_start() -> void:
-	if not create_boxes:
-		return
-	if not _holder or not _holder.is_inside_tree():
-		return
-	var box: Node3D = _spawn_box(
-		_player.global_position - Vector3(0, 0.45, 0),
-		_player.firstDirection.y
-	)
-	box.name = "OriginalGuidanceBox"
-	var gb: GuidanceBox = _find_guidance_box(box)
-	if gb:
-		gb.can_be_triggered = false
-	_player.onturn.connect(_on_player_turn)
+	_forward = _player.secondDirection.y if _player.rotation_degrees.y == _player.firstDirection.y else _player.firstDirection.y
+	if createBoxes and not _original_created:
+		var originalBox: Node3D = _spawn_box(
+			_player_transform.global_position - Vector3(0, 0.45, 0),
+			_player.firstDirection.y
+		)
+		if originalBox:
+			originalBox.name = "OriginalGuidanceBox"
+			var originalGuidanceBox: GuidanceBox = _find_guidance_box(originalBox)
+			if originalGuidanceBox:
+				originalGuidanceBox.canBeTriggered = false
+			_original_created = true
+
+	if createBoxes and LevelManager.GameState == LevelManager.GameStatus.Playing and not _started:
+		if not _player.OnTurn.is_connected(_on_player_turn):
+			_player.OnTurn.connect(_on_player_turn)
+		_started = true
 
 func _find_guidance_box(node: Node) -> GuidanceBox:
+	if node is GuidanceBox:
+		return node as GuidanceBox
 	for child in node.get_children():
-		if child is GuidanceBox:
-			return child
 		var found: GuidanceBox = _find_guidance_box(child)
 		if found:
 			return found
 	return null
 
 func _on_player_turn() -> void:
-	if create_boxes and LevelManager.GameState == LevelManager.GameStatus.Playing:
-		var forward_y: float
-		if _player.rotation_degrees.y == _player.firstDirection.y:
-			forward_y = _player.secondDirection.y
-		else:
-			forward_y = _player.firstDirection.y
-		var box: Node3D = _spawn_box(
-			_player.global_position - Vector3(0, 0.45, 0),
-			forward_y
-		)
+	var box: Node3D = _spawn_box(
+		_player_transform.global_position - Vector3(0, 0.45, 0),
+		_forward
+	)
+	if box:
 		box.name = "GuidanceBox %d" % _id
 		_id += 1
 
 func _spawn_box(pos: Vector3, rot_y: float) -> Node3D:
-	if not _box_scene:
+	if not _box_scene or not is_instance_valid(_holder):
 		push_error("GuidanceController.gd: GuidanceBox 场景未加载，无法生成引导盒")
 		return null
 	var box: Node3D = _box_scene.instantiate() as Node3D
@@ -101,7 +99,7 @@ func _spawn_box(pos: Vector3, rot_y: float) -> Node3D:
 func _set_color(box: Node3D, color: Color) -> void:
 	var gb: GuidanceBox = _find_guidance_box(box)
 	if gb:
-		gb.set_color(color)
+		gb.SetColor(color)
 
 func _generate_lines() -> void:
 	for i in range(_boxes.size()):
@@ -112,17 +110,17 @@ func _generate_lines() -> void:
 		if not is_instance_valid(a) or not is_instance_valid(b):
 			continue
 		var gb: GuidanceBox = _find_guidance_box(a)
-		if gb and not gb.have_line:
+		if gb and not gb.haveLine:
 			continue
 		var midpoint: Vector3 = 0.5 * (a.global_position + b.global_position)
 		var dist: float = a.global_position.distance_to(b.global_position)
-		var line_length: float = dist - 0.5 * box_size_y - 2 * line_gap
-		if line_length <= 0.0:
+		var lineLength: float = dist - 0.5 * _box_size_y - 2 * lineGap
+		if lineLength <= 0.0:
 			continue
 		var line: MeshInstance3D = MeshInstance3D.new()
 		line.mesh = BoxMesh.new()
 		var mat: StandardMaterial3D = StandardMaterial3D.new()
-		mat.albedo_color = guidance_color
+		mat.albedo_color = guidanceBoxColor
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		line.set_surface_override_material(0, mat)
 		var wrapper: Node3D = Node3D.new()
@@ -134,5 +132,5 @@ func _generate_lines() -> void:
 		var right: Vector3 = direction.cross(up).normalized()
 		var forward: Vector3 = right.cross(direction).normalized()
 		wrapper.global_transform.basis = Basis(right, direction, forward)
-		wrapper.set_scale(Vector3(0.15, line_length, 0.15))
+		wrapper.set_scale(Vector3(0.15, lineLength, 0.15))
 		wrapper.name = "%s - Line" % a.name

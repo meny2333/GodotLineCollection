@@ -1,26 +1,31 @@
-extends Node3D
+extends Node
 
 ## Switches the player to a scene-authored alternative visual.
 enum Facing { DontChange, FirstDirection, SecondDirection }
 
-@export var enable_henshin: bool = true
-@export var henshin_object: Node3D
-@export var object_offset: Vector3 = Vector3.ZERO
-@export var show_line_tail: bool = true
-@export var show_line_body: bool = true
-@export_range(0.0, 10.0, 0.05) var animation_time: float = 0.0
+@export var enableHenshin: bool = true
+@export var henshinObject: Node3D
+@export var objectOffset: Vector3 = Vector3.ZERO
+@export var showLineTail: bool = true
+@export var showLineBody: bool = true
+@export_range(0.0, 10.0, 0.05) var animationTime: float = 0.0
 @export var facing: Facing = Facing.DontChange
 
 func trigger(body: Node3D) -> void:
 	var player: Player = body as Player
 	if not player:
 		return
-	if not enable_henshin:
-		player.reset_henshin_state()
-		return
-	player.enable_henshin(henshin_object, object_offset, show_line_tail, show_line_body, animation_time)
-	match facing:
-		Facing.FirstDirection:
-			henshin_object.rotation_degrees = player.firstDirection if henshin_object else Vector3.ZERO
-		Facing.SecondDirection:
-			henshin_object.rotation_degrees = player.secondDirection if henshin_object else Vector3.ZERO
+	if not enableHenshin:
+		Player.instance.ResetHenshinState()
+	else:
+		Player.instance.henShin = enableHenshin
+		Player.instance.henshinObject = henshinObject
+		Player.instance.objectOffset = objectOffset
+		Player.instance.showLineTail = showLineTail
+		Player.instance.showLineBody = showLineBody
+		Player.instance.rotationTime = animationTime
+
+		if facing == Facing.FirstDirection:
+			Player.instance.henshinObject.rotation_degrees = Player.instance.firstDirection
+		elif facing == Facing.SecondDirection:
+			Player.instance.henshinObject.rotation_degrees = Player.instance.secondDirection

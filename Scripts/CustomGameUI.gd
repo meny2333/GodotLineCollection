@@ -71,7 +71,7 @@ func _on_state_changed(_old_state: LevelManager.GameStatus, new_state: LevelMana
 	match new_state:
 		LevelManager.GameStatus.Died:
 			# 有检查点且未拒绝 → 显示复活 UI
-			if LevelManager.current_checkpoint != null and not _revive_declined:
+			if LevelManager.currentCheckpoint != null and not _revive_declined:
 				_show_revive_ui()
 			else:
 				_show_game_over_ui()
@@ -243,10 +243,10 @@ func _update_user_display() -> void:
 
 # --- 按钮逻辑 ---
 func _on_revive_btn_pressed() -> void:
-	if LevelManager.current_checkpoint:
-		LevelManager.current_checkpoint.revive()
+	if LevelManager.currentCheckpoint:
+		LevelManager.currentCheckpoint.revive()
 		if LevelManager.crown > 0:
-			LevelManager.is_relive = true
+			LevelManager.isRelive = true
 
 func _on_revive_back_pressed() -> void:
 	_revive_declined = true
@@ -258,9 +258,9 @@ func _on_revive_pressed() -> void:
 	get_tree().reload_current_scene()
 
 func _on_back_pressed() -> void:
-	LevelManager.is_end = false
-	LevelManager.is_relive = false
-	LevelManager.camera_checkpoint.restore_pending = false
+	LevelManager.isEnd = false
+	LevelManager.isRelive = false
+	LevelManager.cameraCheckpoint.restore_pending = false
 	LevelManager.gem = 0
 	LevelManager.crown = 0
 	LevelManager.percent = 0

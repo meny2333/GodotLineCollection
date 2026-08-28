@@ -255,8 +255,7 @@ func _downloadPending() -> bool:
 		if _status:
 			_status.text = "正在下载 %s" % filename
 		if await _download(file_url, dest):
-			if _loadPack(dest, bool(entry.get("replace", false))):
-				loaded_count += 1
+			loaded_count += 1
 		else:
 			all_ok = false
 			push_warning("[HotUpdate] download failed: %s" % file_url)

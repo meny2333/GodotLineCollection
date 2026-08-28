@@ -38,8 +38,10 @@ func _on_update() -> void:
 	HotUpdate._progress = _bar
 	HotUpdate._status = _status
 	var ok: bool = await HotUpdate._downloadPending()
+	_bar.value = 100
 	_status.text = "更新完成" if ok else "下载失败"
-	await get_tree().create_timer(0.4).timeout
+	print("[UpdateCheck] download ok=", ok)
+	await get_tree().process_frame
 	_go_next()
 
 

@@ -182,165 +182,69 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.95)
 theme_override_font_sizes/font_size = 16
 text = "画面"
 
-[node name="QualityLevelBtn" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1255003439]
-custom_minimum_size = Vector2(0, 32)
+[node name="QualityRow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_constants/separation = 8
 
-[node name="QualityLevelBtn2" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1164528070]
-custom_minimum_size = Vector2(0, 32)
+[node name="QualityLabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/QualityRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "画质等级"
 
-[node name="QualityLevelBtn3" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1165131692]
-custom_minimum_size = Vector2(0, 32)
+[node name="QualityOption" type="OptionButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/QualityRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
 
-[node name="QualityLevelBtn4" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=825007896]
-custom_minimum_size = Vector2(0, 32)
+[node name="AARow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_constants/separation = 8
 
-[node name="QualityLevelBtn5" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1699782731]
-custom_minimum_size = Vector2(0, 32)
+[node name="AALabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/AARow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "抗锯齿"
 
-[node name="QualityLevelBtn6" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=433721058]
-custom_minimum_size = Vector2(0, 32)
+[node name="AAOption" type="OptionButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/AARow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
 
-[node name="QualityLevelBtn7" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=517551330]
-custom_minimum_size = Vector2(0, 32)
+[node name="ShadowRow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_constants/separation = 8
 
-[node name="QualityLevelBtn8" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=917966805]
-custom_minimum_size = Vector2(0, 32)
+[node name="ShadowLabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/ShadowRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "阴影"
 
-[node name="QualityLevelBtn9" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=888719140]
-custom_minimum_size = Vector2(0, 32)
+[node name="ShadowToggle" type="CheckButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/ShadowRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+text = "开启"
 
-[node name="QualityLevelBtn10" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=677798177]
-custom_minimum_size = Vector2(0, 32)
+[node name="PostRow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_constants/separation = 8
 
-[node name="QualityLevelBtn11" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=954008629]
-custom_minimum_size = Vector2(0, 32)
+[node name="PostLabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/PostRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "后处理"
 
-[node name="QualityLevelBtn12" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1226979614]
-custom_minimum_size = Vector2(0, 32)
+[node name="PostToggle" type="CheckButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/PostRow"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
-
-[node name="QualityLevelBtn13" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1681341316]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
-
-[node name="QualityLevelBtn14" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=2064577541]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
-
-[node name="QualityLevelBtn15" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1651185707]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "💻画质等级"
-
-[node name="ShadowBtn" type="Button" parent="Panel/Margin/VBox/Scroll/Content/QualitySection" unique_id=1870557032]
-custom_minimum_size = Vector2(0, 32)
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 0.9)
-theme_override_font_sizes/font_size = 13
-theme_override_styles/normal = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/pressed = SubResource("StyleBoxFlat_ClearBtn")
-theme_override_styles/hover = SubResource("StyleBoxFlat_ClearBtnHover")
-text = "🌘阴影"
+text = "开启"
 
 [node name="SourceSection" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll/Content" unique_id=1184832945]
 layout_mode = 2

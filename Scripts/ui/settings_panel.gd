@@ -10,7 +10,12 @@ const SETTINGS_CFG_PATH := "user://settings.cfg"
 @onready var _source_list: VBoxContainer = $Panel/Margin/VBox/Scroll/Content/SourceSection/SourceList
 @onready var _source_section: Control = $Panel/Margin/VBox/Scroll/Content/SourceSection
 @onready var _cache_section: Control = $Panel/Margin/VBox/Scroll/Content/CacheSection
+@onready var _quality_section: Control = $Panel/Margin/VBox/Scroll/Content/QualitySection
 @onready var _display_section: Control = $Panel/Margin/VBox/Scroll/Content/DisplaySection
+@onready var _quality_option: OptionButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/QualityRow/QualityOption
+@onready var _aa_option: OptionButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/AARow/AAOption
+@onready var _shadow_toggle: CheckButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/ShadowRow/ShadowToggle
+@onready var _post_toggle: CheckButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/PostRow/PostToggle
 @onready var _cache_size_label: Label = $Panel/Margin/VBox/Scroll/Content/CacheSection/CacheSizeLabel
 @onready var _cache_count_label: Label = $Panel/Margin/VBox/Scroll/Content/CacheSection/CacheCountLabel
 @onready var _clear_btn: Button = $Panel/Margin/VBox/Scroll/Content/CacheSection/ClearBtn
@@ -26,9 +31,15 @@ func _ready() -> void:
 	_scan_cache()
 	_view_option.add_item("卡片视图", 0)
 	_view_option.add_item("列表视图", 1)
+	for label in GraphicsQuality.QUALITY_LABELS:
+		_quality_option.add_item(label)
+	for label in GraphicsQuality.ANTIALIASING_LABELS:
+		_aa_option.add_item(label)
 	_load_display_settings()
+	_load_quality_settings()
 
 	_back_btn.pressed.connect(_on_back_pressed)
+	$Panel/Margin/VBox/TitleBar/HBox/NavIcons/QualityNav.pressed.connect(_scroll_to_section.bind(_quality_section))
 	$Panel/Margin/VBox/TitleBar/HBox/NavIcons/SourceNav.pressed.connect(_scroll_to_section.bind(_source_section))
 	$Panel/Margin/VBox/TitleBar/HBox/NavIcons/CacheNav.pressed.connect(_scroll_to_section.bind(_cache_section))
 	$Panel/Margin/VBox/TitleBar/HBox/NavIcons/DisplayNav.pressed.connect(_scroll_to_section.bind(_display_section))
@@ -36,6 +47,10 @@ func _ready() -> void:
 	_confirm_dialog.confirmed.connect(_do_clear_cache)
 	_view_option.item_selected.connect(_on_view_changed)
 	_music_toggle.toggled.connect(_on_music_toggled)
+	_quality_option.item_selected.connect(_on_quality_changed)
+	_aa_option.item_selected.connect(_on_aa_changed)
+	_shadow_toggle.toggled.connect(_on_shadow_toggled)
+	_post_toggle.toggled.connect(_on_post_toggled)
 	get_viewport().size_changed.connect(_center_panel)
 
 
@@ -163,6 +178,43 @@ func _on_music_toggled(enabled: bool) -> void:
 	cfg.load(SETTINGS_CFG_PATH)
 	cfg.set_value("display", "music_preview", enabled)
 	cfg.save(SETTINGS_CFG_PATH)
+
+
+func _load_quality_settings() -> void:
+	GraphicsQuality.loadSettings()
+	_quality_option.select(GraphicsQuality.qualityLevel)
+	_aa_option.select(GraphicsQuality.antiAliasLevel)
+	_shadow_toggle.button_pressed = GraphicsQuality.shadowsEnabled
+	_post_toggle.button_pressed = GraphicsQuality.postProcessEnabled
+
+
+func _apply_quality() -> void:
+	GraphicsQuality.saveSettings()
+	var env: Environment = null
+	var cam := get_viewport().get_camera_3d()
+	if cam:
+		env = cam.environment
+	GraphicsQuality.applyToScene(get_viewport(), get_tree(), env)
+
+
+func _on_quality_changed(index: int) -> void:
+	GraphicsQuality.setLevel(index)
+	_apply_quality()
+
+
+func _on_aa_changed(index: int) -> void:
+	GraphicsQuality.antiAliasLevel = index
+	_apply_quality()
+
+
+func _on_shadow_toggled(enabled: bool) -> void:
+	GraphicsQuality.shadowsEnabled = enabled
+	_apply_quality()
+
+
+func _on_post_toggled(enabled: bool) -> void:
+	GraphicsQuality.postProcessEnabled = enabled
+	_apply_quality()
 
 
 func _scroll_to_section(section: Control) -> void:

@@ -9,12 +9,16 @@ const DEFAULT_PROXY := "https://gh-proxy.com/https://raw.githubusercontent.com/g
 signal pack_loaded(path: String)
 signal update_finished(loaded: int)
 signal update_available(entries: Array, force: bool)
+signal download_progress(filename: String, percent: float)
 
 var loaded_count: int = 0
 var pending: Array = []
 var force_update: bool = false
 var _base_url: String = ""
 var _prompt: ConfirmationDialog = null
+var _progress: ProgressBar = null
+var _status: Label = null
+var _busy: bool = false
 
 
 func _ready() -> void:
@@ -75,7 +79,7 @@ func _loadLocalPacks() -> int:
 		dir.list_dir_end()
 		packs.sort()
 		for file_name in packs:
-			if _loadPack(dir_path.path_join(file_name), false):
+			if _loadPack(dir_path.path_join(file_name), true):
 				count += 1
 	print("[HotUpdate] loaded %d local pack(s)" % count)
 	return count
@@ -167,9 +171,22 @@ func _promptUpdate() -> void:
 		names.append(str(entry.get("filename", "pack")))
 	var dlg := ConfirmationDialog.new()
 	dlg.title = "发现更新" if not force_update else "必须更新"
-	dlg.dialog_text = "发现热更新：\n%s" % "\n".join(names)
 	dlg.ok_button_text = "更新"
 	dlg.cancel_button_text = "退出" if force_update else "稍后"
+	dlg.exclusive = true
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(360, 80)
+	var status := Label.new()
+	status.text = "发现热更新：\n%s" % "\n".join(names)
+	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var bar := ProgressBar.new()
+	bar.min_value = 0
+	bar.max_value = 100
+	bar.value = 0
+	bar.visible = false
+	box.add_child(status)
+	box.add_child(bar)
+	dlg.add_child(box)
 	dlg.confirmed.connect(_onAccept)
 	if force_update:
 		dlg.canceled.connect(_onForceCancel)
@@ -177,18 +194,45 @@ func _promptUpdate() -> void:
 		dlg.canceled.connect(_onSkip)
 	add_child(dlg)
 	_prompt = dlg
+	_progress = bar
+	_status = status
 	dlg.popup_centered()
 
 
 func _onAccept() -> void:
-	await _downloadPending()
+	if _busy:
+		return
+	_busy = true
+	if _prompt:
+		_prompt.get_ok_button().disabled = true
+		if not force_update:
+			_prompt.get_cancel_button().disabled = true
+	if _progress:
+		_progress.visible = true
+	if _status:
+		_status.text = "正在下载…"
+	var ok := await _downloadPending()
+	_busy = false
+	if _status:
+		_status.text = "更新完成" if ok else "下载失败"
+	if _progress:
+		_progress.value = 100 if ok else _progress.value
+	var toast: Node = get_node_or_null("/root/PopupToast")
+	if toast and toast.has_method("show"):
+		toast.call("show", "热更新完成" if ok else "热更新失败", 3.0)
 	update_finished.emit(loaded_count)
 	if _prompt:
-		_prompt.queue_free()
+		await get_tree().create_timer(0.6).timeout
+		if is_instance_valid(_prompt):
+			_prompt.queue_free()
 		_prompt = null
+		_progress = null
+		_status = null
 
 
 func _onSkip() -> void:
+	if _busy:
+		return
 	pending.clear()
 	update_finished.emit(loaded_count)
 	if _prompt:
@@ -197,21 +241,30 @@ func _onSkip() -> void:
 
 
 func _onForceCancel() -> void:
+	if _busy:
+		return
 	get_tree().quit()
 
 
-func _downloadPending() -> void:
+func _downloadPending() -> bool:
 	var cache_dir := ProjectSettings.globalize_path(USER_PATCH_DIR)
+	var all_ok := true
 	for entry in pending:
 		var filename := str(entry.get("filename", ""))
 		var dest := cache_dir.path_join(filename)
 		var file_url := str(entry.get("url", ""))
 		if file_url.is_empty():
 			file_url = _base_url + filename
+		if _status:
+			_status.text = "正在下载 %s" % filename
 		if await _download(file_url, dest):
 			if _loadPack(dest, bool(entry.get("replace", false))):
 				loaded_count += 1
+		else:
+			all_ok = false
+			push_warning("[HotUpdate] download failed: %s" % file_url)
 	pending.clear()
+	return all_ok
 
 
 func _download(url: String, dest: String) -> bool:
@@ -220,14 +273,34 @@ func _download(url: String, dest: String) -> bool:
 	var http := HTTPRequest.new()
 	add_child(http)
 	http.timeout = 60.0
+	http.use_threads = true
 	var err := http.request(url)
 	if err != OK:
 		http.queue_free()
 		return false
-	var result: Array = await http.request_completed
+	var done := false
+	var code := 0
+	var body := PackedByteArray()
+	http.request_completed.connect(func(_r: int, c: int, _h: PackedStringArray, b: PackedByteArray):
+		code = c
+		body = b
+		done = true
+	)
+	while not done:
+		if not is_instance_valid(http):
+			return false
+		var total := http.get_body_size()
+		var got := http.get_downloaded_bytes()
+		var percent := 0.0
+		if total > 0:
+			percent = clampf(float(got) / float(total) * 100.0, 0.0, 100.0)
+		elif got > 0:
+			percent = 50.0
+		if _progress:
+			_progress.value = percent
+		download_progress.emit(dest.get_file(), percent)
+		await get_tree().process_frame
 	http.queue_free()
-	var code: int = result[1]
-	var body: PackedByteArray = result[3]
 	if code != 200 or body.is_empty():
 		return false
 	var file := FileAccess.open(dest, FileAccess.WRITE)

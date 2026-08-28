@@ -246,6 +246,38 @@ theme_override_colors/font_color = Color(1, 1, 1, 0.85)
 theme_override_font_sizes/font_size = 13
 text = "开启"
 
+[node name="ResolutionRow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResolutionLabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/ResolutionRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "分辨率"
+
+[node name="ResolutionOption" type="OptionButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/ResolutionRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 13
+
+[node name="FpsRow" type="HBoxContainer" parent="Panel/Margin/VBox/Scroll/Content/QualitySection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FpsLabel" type="Label" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/FpsRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.62, 0.7, 1)
+theme_override_font_sizes/font_size = 14
+text = "帧率"
+
+[node name="FpsOption" type="OptionButton" parent="Panel/Margin/VBox/Scroll/Content/QualitySection/FpsRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.85)
+theme_override_font_sizes/font_size = 13
+
 [node name="SourceSection" type="VBoxContainer" parent="Panel/Margin/VBox/Scroll/Content" unique_id=1184832945]
 layout_mode = 2
 theme_override_constants/separation = 8

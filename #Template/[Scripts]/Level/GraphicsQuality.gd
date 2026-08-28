@@ -6,12 +6,18 @@ const SETTINGS_PATH: String = "user://settings.cfg"
 const SECTION: String = "graphics"
 const QUALITY_LABELS: Array[String] = ["低", "中", "高", "极高"]
 const ANTIALIASING_LABELS: Array[String] = ["Off", "x2", "x4", "x8"]
+const RESOLUTION_LABELS: Array[String] = ["窗口", "1280x720", "1920x1080", "2560x1440", "全屏"]
+const FPS_LABELS: Array[String] = ["不限制", "30", "60", "120"]
+const RESOLUTION_SIZES: Array[Vector2i] = [Vector2i.ZERO, Vector2i(1280, 720), Vector2i(1920, 1080), Vector2i(2560, 1440), Vector2i.ZERO]
+const FPS_VALUES: Array[int] = [0, 30, 60, 120]
 
 ## 0: 低 (Low), 1: 中 (Medium), 2: 高 (High), 3: 极高 (Ultra)
 static var qualityLevel: int = 2
 static var antiAliasLevel: int = 0
 static var shadowsEnabled: bool = true
 static var postProcessEnabled: bool = true
+static var resolutionIndex: int = 0
+static var fpsIndex: int = 0
 
 static var shadowDefaults: Dictionary[int, bool] = {}
 static var postProcessDefaults: Dictionary[int, Dictionary] = {}
@@ -46,11 +52,15 @@ static func loadSettings() -> Dictionary:
 	antiAliasLevel = clampi(int(config.get_value(SECTION, "antialiasing_level", 0)), 0, 3)
 	shadowsEnabled = bool(config.get_value(SECTION, "shadows_enabled", true))
 	postProcessEnabled = bool(config.get_value(SECTION, "post_process_enabled", true))
+	resolutionIndex = clampi(int(config.get_value(SECTION, "resolution_index", 0)), 0, RESOLUTION_LABELS.size() - 1)
+	fpsIndex = clampi(int(config.get_value(SECTION, "fps_index", 0)), 0, FPS_LABELS.size() - 1)
 	return {
 		"quality_level": qualityLevel,
 		"antialiasing_level": antiAliasLevel,
 		"shadows_enabled": shadowsEnabled,
 		"post_process_enabled": postProcessEnabled,
+		"resolution_index": resolutionIndex,
+		"fps_index": fpsIndex,
 	}
 
 static func saveSettings() -> void:
@@ -60,6 +70,8 @@ static func saveSettings() -> void:
 	config.set_value(SECTION, "antialiasing_level", antiAliasLevel)
 	config.set_value(SECTION, "shadows_enabled", shadowsEnabled)
 	config.set_value(SECTION, "post_process_enabled", postProcessEnabled)
+	config.set_value(SECTION, "resolution_index", resolutionIndex)
+	config.set_value(SECTION, "fps_index", fpsIndex)
 	var error: Error = config.save(SETTINGS_PATH)
 	if error != OK:
 		push_error("GraphicsQuality.gd: failed to save settings (%s)" % error_string(error))
@@ -69,6 +81,8 @@ static func applyToScene(viewport: Viewport, sceneTree: SceneTree, environment: 
 	applyShadows(sceneTree)
 	applyPostProcess(environment)
 	applyRenderingQuality()
+	applyWindow()
+	applyFps()
 	if sceneTree:
 		sceneTree.call_group("active_by_quality", "applyQuality", qualityLevel)
 
@@ -84,6 +98,24 @@ static func applyAntialiasing(viewport: Viewport) -> void:
 			viewport.msaa_3d = Viewport.MSAA_4X
 		_:
 			viewport.msaa_3d = Viewport.MSAA_8X
+
+static func applyWindow() -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	resolutionIndex = clampi(resolutionIndex, 0, RESOLUTION_LABELS.size() - 1)
+	if resolutionIndex == RESOLUTION_LABELS.size() - 1:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	var size: Vector2i = RESOLUTION_SIZES[resolutionIndex]
+	if size.x > 0:
+		DisplayServer.window_set_size(size)
+
+
+static func applyFps() -> void:
+	fpsIndex = clampi(fpsIndex, 0, FPS_VALUES.size() - 1)
+	Engine.max_fps = FPS_VALUES[fpsIndex]
+
 
 static func applyRenderingQuality() -> void:
 	# 根据画质档位调节阴影贴图分辨率

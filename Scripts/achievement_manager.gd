@@ -21,11 +21,16 @@ static func AddAchievement(key: String) -> void:
 		return
 	unlocked[key] = true
 	_save()
+	var loop := Engine.get_main_loop()
+	if loop == null or loop.root == null:
+		return
 	var title: String = str(catalog.get(key, {}).get("title", key))
-	if Engine.get_main_loop() != null and Engine.get_main_loop().root.has_node("/root/PopupToast"):
-		PopupToast.show("成就解锁：%s" % title)
-	if Engine.get_main_loop() != null and Engine.get_main_loop().root.has_node("/root/CloudArchiveService"):
-		CloudArchiveService.queue_save("achievement")
+	var toast: Node = loop.root.get_node_or_null("/root/PopupToast")
+	if toast and toast.has_method("show"):
+		toast.call("show", "成就解锁：%s" % title)
+	var cloud: Node = loop.root.get_node_or_null("/root/CloudArchiveService")
+	if cloud and cloud.has_method("queue_save"):
+		cloud.call("queue_save", "achievement")
 
 
 static func HasAchievement(key: String) -> bool:

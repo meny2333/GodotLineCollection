@@ -8,8 +8,13 @@ const DEFAULT_PROXY := "https://gh-proxy.com/https://raw.githubusercontent.com/g
 
 signal pack_loaded(path: String)
 signal update_finished(loaded: int)
+signal update_available(entries: Array, force: bool)
 
 var loaded_count: int = 0
+var pending: Array = []
+var force_update: bool = false
+var _base_url: String = ""
+var _prompt: ConfirmationDialog = null
 
 
 func _ready() -> void:
@@ -113,42 +118,100 @@ func _fetchRemote() -> void:
 		var code: int = result[1]
 		var body: PackedByteArray = result[3]
 		if code == 200 and body.size() > 0:
-			_applyManifest(body.get_string_from_utf8())
+			_parseManifest(body.get_string_from_utf8())
 			break
 	http.queue_free()
-	update_finished.emit(loaded_count)
+	if pending.is_empty():
+		update_finished.emit(loaded_count)
+		return
+	update_available.emit(pending, force_update)
+	_promptUpdate()
 
 
-func _applyManifest(text: String) -> void:
+func _parseManifest(text: String) -> void:
 	var parsed: Variant = JSON.parse_string(text)
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
+	force_update = bool(parsed.get("force", false))
+	_base_url = str(parsed.get("base_url", DEFAULT_MANIFEST.get_base_dir() + "/"))
+	if not _base_url.ends_with("/"):
+		_base_url += "/"
 	var packs: Variant = parsed.get("packs", [])
 	if typeof(packs) != TYPE_ARRAY:
 		return
 	var cache_dir := ProjectSettings.globalize_path(USER_PATCH_DIR)
 	DirAccess.make_dir_recursive_absolute(cache_dir)
+	pending.clear()
 	for entry in packs:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var filename := str(entry.get("filename", ""))
 		if filename.is_empty():
 			continue
+		if bool(entry.get("force", false)):
+			force_update = true
 		var dest := cache_dir.path_join(filename)
-		var replace := bool(entry.get("replace", false))
 		if FileAccess.file_exists(dest):
-			if _loadPack(dest, replace):
+			if _loadPack(dest, bool(entry.get("replace", false))):
 				loaded_count += 1
 			continue
+		pending.append(entry)
+
+
+func _promptUpdate() -> void:
+	if pending.is_empty():
+		update_finished.emit(loaded_count)
+		return
+	var names: PackedStringArray = PackedStringArray()
+	for entry in pending:
+		names.append(str(entry.get("filename", "pack")))
+	var dlg := ConfirmationDialog.new()
+	dlg.title = "发现更新" if not force_update else "必须更新"
+	dlg.dialog_text = "发现热更新：\n%s" % "\n".join(names)
+	dlg.ok_button_text = "更新"
+	dlg.cancel_button_text = "退出" if force_update else "稍后"
+	dlg.confirmed.connect(_onAccept)
+	if force_update:
+		dlg.canceled.connect(_onForceCancel)
+	else:
+		dlg.canceled.connect(_onSkip)
+	add_child(dlg)
+	_prompt = dlg
+	dlg.popup_centered()
+
+
+func _onAccept() -> void:
+	await _downloadPending()
+	update_finished.emit(loaded_count)
+	if _prompt:
+		_prompt.queue_free()
+		_prompt = null
+
+
+func _onSkip() -> void:
+	pending.clear()
+	update_finished.emit(loaded_count)
+	if _prompt:
+		_prompt.queue_free()
+		_prompt = null
+
+
+func _onForceCancel() -> void:
+	get_tree().quit()
+
+
+func _downloadPending() -> void:
+	var cache_dir := ProjectSettings.globalize_path(USER_PATCH_DIR)
+	for entry in pending:
+		var filename := str(entry.get("filename", ""))
+		var dest := cache_dir.path_join(filename)
 		var file_url := str(entry.get("url", ""))
 		if file_url.is_empty():
-			var base := str(parsed.get("base_url", DEFAULT_MANIFEST.get_base_dir() + "/"))
-			if not base.ends_with("/"):
-				base += "/"
-			file_url = base + filename
+			file_url = _base_url + filename
 		if await _download(file_url, dest):
-			if _loadPack(dest, replace):
+			if _loadPack(dest, bool(entry.get("replace", false))):
 				loaded_count += 1
+	pending.clear()
 
 
 func _download(url: String, dest: String) -> bool:

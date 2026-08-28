@@ -20,11 +20,25 @@ func _init() -> void:
 	if hot == null:
 		push_error("HotUpdate failed to load")
 		failed += 1
+	else:
+		var hu: Node = hot.new()
+		hu._parseManifest('{"force":true,"packs":[{"filename":"a.pck"}]}')
+		if not hu.force_update or hu.pending.size() != 1:
+			push_error("HotUpdate force/pending parse failed")
+			failed += 1
+		hu.free()
 	GraphicsQuality.setLevel(0)
 	if GraphicsQuality.getQualityLabel() != "低":
 		push_error("GraphicsQuality label mismatch")
 		failed += 1
 	GraphicsQuality.setLevel(2)
+	GraphicsQuality.fpsIndex = 2
+	GraphicsQuality.applyFps()
+	if Engine.max_fps != 60:
+		push_error("GraphicsQuality fps mismatch")
+		failed += 1
+	GraphicsQuality.fpsIndex = 0
+	GraphicsQuality.applyFps()
 	if failed > 0:
 		push_error("[check_boot] FAILED %d" % failed)
 		quit(1)

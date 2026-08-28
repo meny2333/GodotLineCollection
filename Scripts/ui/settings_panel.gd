@@ -16,6 +16,8 @@ const SETTINGS_CFG_PATH := "user://settings.cfg"
 @onready var _aa_option: OptionButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/AARow/AAOption
 @onready var _shadow_toggle: CheckButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/ShadowRow/ShadowToggle
 @onready var _post_toggle: CheckButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/PostRow/PostToggle
+@onready var _resolution_option: OptionButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/ResolutionRow/ResolutionOption
+@onready var _fps_option: OptionButton = $Panel/Margin/VBox/Scroll/Content/QualitySection/FpsRow/FpsOption
 @onready var _cache_size_label: Label = $Panel/Margin/VBox/Scroll/Content/CacheSection/CacheSizeLabel
 @onready var _cache_count_label: Label = $Panel/Margin/VBox/Scroll/Content/CacheSection/CacheCountLabel
 @onready var _clear_btn: Button = $Panel/Margin/VBox/Scroll/Content/CacheSection/ClearBtn
@@ -35,6 +37,10 @@ func _ready() -> void:
 		_quality_option.add_item(label)
 	for label in GraphicsQuality.ANTIALIASING_LABELS:
 		_aa_option.add_item(label)
+	for label in GraphicsQuality.RESOLUTION_LABELS:
+		_resolution_option.add_item(label)
+	for label in GraphicsQuality.FPS_LABELS:
+		_fps_option.add_item(label)
 	_load_display_settings()
 	_load_quality_settings()
 
@@ -51,6 +57,8 @@ func _ready() -> void:
 	_aa_option.item_selected.connect(_on_aa_changed)
 	_shadow_toggle.toggled.connect(_on_shadow_toggled)
 	_post_toggle.toggled.connect(_on_post_toggled)
+	_resolution_option.item_selected.connect(_on_resolution_changed)
+	_fps_option.item_selected.connect(_on_fps_changed)
 	get_viewport().size_changed.connect(_center_panel)
 
 
@@ -186,6 +194,8 @@ func _load_quality_settings() -> void:
 	_aa_option.select(GraphicsQuality.antiAliasLevel)
 	_shadow_toggle.button_pressed = GraphicsQuality.shadowsEnabled
 	_post_toggle.button_pressed = GraphicsQuality.postProcessEnabled
+	_resolution_option.select(GraphicsQuality.resolutionIndex)
+	_fps_option.select(GraphicsQuality.fpsIndex)
 
 
 func _apply_quality() -> void:
@@ -214,6 +224,16 @@ func _on_shadow_toggled(enabled: bool) -> void:
 
 func _on_post_toggled(enabled: bool) -> void:
 	GraphicsQuality.postProcessEnabled = enabled
+	_apply_quality()
+
+
+func _on_resolution_changed(index: int) -> void:
+	GraphicsQuality.resolutionIndex = index
+	_apply_quality()
+
+
+func _on_fps_changed(index: int) -> void:
+	GraphicsQuality.fpsIndex = index
 	_apply_quality()
 
 

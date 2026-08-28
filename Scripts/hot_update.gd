@@ -26,7 +26,10 @@ func _ready() -> void:
 	if DisplayServer.get_name() == "headless" or OS.get_cmdline_args().has("--script"):
 		update_finished.emit(loaded_count)
 		return
-	_fetchRemote()
+
+
+func check_updates() -> void:
+	await _fetchRemote()
 
 
 func extra_search_dirs() -> PackedStringArray:
@@ -129,7 +132,6 @@ func _fetchRemote() -> void:
 		update_finished.emit(loaded_count)
 		return
 	update_available.emit(pending, force_update)
-	_promptUpdate()
 
 
 func _parseManifest(text: String) -> void:
@@ -154,11 +156,6 @@ func _parseManifest(text: String) -> void:
 			continue
 		if bool(entry.get("force", false)):
 			force_update = true
-		var dest := cache_dir.path_join(filename)
-		if FileAccess.file_exists(dest):
-			if _loadPack(dest, bool(entry.get("replace", false))):
-				loaded_count += 1
-			continue
 		pending.append(entry)
 
 

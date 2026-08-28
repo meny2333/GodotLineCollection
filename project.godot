@@ -19,7 +19,7 @@ warnings/check_invalid_track_paths=false
 [application]
 
 config/name="GodotLineCollection"
-run/main_scene="uid://4b0fo58iyn6m"
+run/main_scene="res://Scenes/UpdateCheck.tscn"
 config/features=PackedStringArray("4.7")
 boot_splash/show_image=false
 config/icon="res://icon.png"

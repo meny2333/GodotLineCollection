@@ -8,6 +8,10 @@
 
 config_version=5
 
+[addons]
+
+imgui/config="res://#Template/[Resources]/ImGuiConfig.tres"
+
 [animation]
 
 warnings/check_invalid_track_paths=false
@@ -26,9 +30,10 @@ GameUIHook="*res://Scripts/GameUIHook.gd"
 CloudArchiveService="*res://Scripts/gas/cloud_archive_service.gd"
 UserManager="*res://Scripts/UserManager.gd"
 LongSceneManager="*uid://b1wsglrtdrf6d"
-ImGui="*res://addons/dear-imgui-godot/imgui_api.gd"
+ImGuiRoot="*res://addons/imgui-godot/data/ImGuiRoot.tscn"
 PopupToast="*res://Scripts/PopupToast.gd"
 ImGuiDebug="*res://Scripts/ImGuiDebug.gd"
+HotUpdate="*res://Scripts/hot_update.gd"
 MCPRuntimeProbe="*res://addons/godot_mcp/runtime/mcp_runtime_probe.gd"
 
 [debug]
@@ -41,7 +46,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg", "res://addons/long_scene_manager/plugin.cfg", "res://addons/ugc_import/plugin.cfg", "res://addons/dear-imgui-godot/plugin.cfg", "res://addons/anthonyec.camera_preview/plugin.cfg", "res://addons/scene_instance_overrides/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg", "res://addons/imgui-godot/plugin.cfg", "res://addons/long_scene_manager/plugin.cfg", "res://addons/ugc_import/plugin.cfg", "res://addons/anthonyec.camera_preview/plugin.cfg", "res://addons/scene_instance_overrides/plugin.cfg")
 
 [input]
 

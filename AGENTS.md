@@ -31,12 +31,14 @@ GodotLineCollection 是一个 Godot 4.6 关卡合集 / 启动器：通过 PCK �
 - `CloudArchiveService` → `Scripts/gas/cloud_archive_service.gd`
 - `UserManager` → `Scripts/UserManager.gd`
 - `LongSceneManager` → addon `long_scene_manager`
-- `ImGuiRoot` / `ImGuiDebug` → imgui 调试 UI
+- `ImGuiRoot` / `ImGuiDebug` → imgui-godot 调试 UI
 - `PopupToast` → `Scripts/PopupToast.gd`
+- `HotUpdate` → `Scripts/hot_update.gd`（启动时加载 `res://patches`、可执行目录 `patches/`、`user://patches`，再按 manifest 拉远程 PCK）
 - `MCPRuntimeProbe` → `addons/godot_mcp/runtime/mcp_runtime_probe.gd`
 
 **不是 autoload、而是纯静态类**（`class_name X extends RefCounted`，按类名静态调用，不要 `get_node`）：
 - `ProgressStore`（`Scripts/progress_store.gd`）关卡进度内存缓存
+- `AchievementManager`（`Scripts/achievement_manager.gd`）成就解锁；`AchievementTrigger` 经 `GlobalClassLookup` 调用 `AddAchievement`
 - `MenuLevelData` / `MenuLevelList`（`Scripts/MenuLevelData.gd` 等，`@tool extends Resource`，可序列化关卡列表）
 - `MusicPreview` / `AdSystem` / `EnergySystem` / `PCKLoader`（`Scripts/level_manager/`）
 

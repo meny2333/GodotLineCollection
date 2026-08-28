@@ -15,6 +15,8 @@ Godot 4.6 游戏关卡集合/启动器。通过 PCK 文件动态加载用户关�
 
 - 🎮 **动态加载**：通过 PCK 文件动态加载用户关卡
 - ☁️ **云端存档**：使用 GAS SDK 实现云端存档同步
+- 🏆 **成就**：`AchievementManager` + 关卡内 `AchievementTrigger`
+- 🔥 **热更新**：启动加载本地/远程 patch PCK（[GodotLinePatches](https://github.com/godotline/GodotLinePatches)）
 - 🎯 **关卡管理**：内置 PCK 导出与管理工具
 
 ## 🚀 快速开始

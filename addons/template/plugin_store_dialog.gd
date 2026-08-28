@@ -5,8 +5,13 @@ extends ConfirmationDialog
 ## 插件商城对话框 - 显示可用插件列表，支持一键下载、启用、卸载
 
 const PluginDownloaderClass := preload("res://addons/template/plugin_downloader.gd")
+const PluginInstallerClass := preload("res://addons/template/plugin_installer.gd")
+
+enum SortMode { SORT_BY_NAME, SORT_BY_TIME }
 
 var _plugin_list: ItemList
+var _sort_select: OptionButton
+var _sort_mode: int = SortMode.SORT_BY_TIME
 var _source_edit: LineEdit
 var _refresh_button: Button
 var _download_source_select: OptionButton
@@ -23,59 +28,6 @@ var _is_busy: bool = false
 var _manifest_warning: String = ""
 var _is_refreshing: bool = false
 var _template_version: String = ""
-
-
-## 清理上一次编辑器会话遗留的隔离文件。user:// 不会被 EditorFileSystem 扫描。
-static func cleanup_quarantine() -> void:
-	var trashRoot: String = ProjectSettings.globalize_path("user://plugin_store_trash")
-	if not DirAccess.dir_exists_absolute(trashRoot):
-		return
-
-	var trashDir: DirAccess = DirAccess.open(trashRoot)
-	if trashDir == null:
-		return
-
-	trashDir.list_dir_begin()
-	while true:
-		var entryName: String = trashDir.get_next()
-		if entryName.is_empty():
-			break
-		if entryName == "." or entryName == "..":
-			continue
-		var entryPath: String = trashRoot.path_join(entryName)
-		if trashDir.current_is_dir():
-			_remove_quarantine_tree(entryPath)
-		else:
-			var removeErr: Error = DirAccess.remove_absolute(entryPath)
-			if removeErr != OK:
-				push_warning("[PluginStore] 无法清理隔离文件（错误码：%d）：%s" % [removeErr, entryPath])
-	trashDir.list_dir_end()
-
-
-static func _remove_quarantine_tree(dir_path: String) -> void:
-	var directory: DirAccess = DirAccess.open(dir_path)
-	if directory == null:
-		return
-
-	directory.list_dir_begin()
-	while true:
-		var childName: String = directory.get_next()
-		if childName.is_empty():
-			break
-		if childName == "." or childName == "..":
-			continue
-		var childPath: String = dir_path.path_join(childName)
-		if directory.current_is_dir():
-			_remove_quarantine_tree(childPath)
-		else:
-			var removeErr: Error = DirAccess.remove_absolute(childPath)
-			if removeErr != OK:
-				push_warning("[PluginStore] 无法清理隔离文件（错误码：%d）：%s" % [removeErr, childPath])
-	directory.list_dir_end()
-
-	var removeDirErr: Error = DirAccess.remove_absolute(dir_path)
-	if removeDirErr != OK:
-		push_warning("[PluginStore] 无法清理隔离目录（错误码：%d）：%s" % [removeDirErr, dir_path])
 
 
 func _ready() -> void:
@@ -95,13 +47,25 @@ func _build_ui() -> void:
 	mainHBox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	add_child(mainHBox)
 
-	# 左侧：插件列表
+	# 左侧：排序切换 + 插件列表
+	var listVBox := VBoxContainer.new()
+	listVBox.custom_minimum_size = Vector2(300, 0)
+	listVBox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	listVBox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	mainHBox.add_child(listVBox)
+
+	_sort_select = OptionButton.new()
+	_sort_select.add_item("按首字排序")
+	_sort_select.add_item("按时间排序")
+	_sort_select.select(SortMode.SORT_BY_TIME)
+	_sort_select.item_selected.connect(_on_sort_selected)
+	listVBox.add_child(_sort_select)
+
 	_plugin_list = ItemList.new()
-	_plugin_list.custom_minimum_size = Vector2(300, 0)
 	_plugin_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_plugin_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_plugin_list.item_selected.connect(_on_plugin_selected)
-	mainHBox.add_child(_plugin_list)
+	listVBox.add_child(_plugin_list)
 
 	# 右侧：详情面板
 	_detail_panel = PanelContainer.new()
@@ -158,6 +122,8 @@ func _build_ui() -> void:
 	_info_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_info_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_info_label.custom_minimum_size = Vector2(0, 200)
+	# RichTextLabel 不会自动打开链接，需监听 meta_clicked 自行处理
+	_info_label.meta_clicked.connect(_on_meta_clicked)
 	detailVBox.add_child(_info_label)
 
 	# 进度条
@@ -207,24 +173,9 @@ func _refresh_plugin_list() -> void:
 	_template_version = PluginRegistry.get_template_version()
 	_all_plugins = await PluginRegistry.fetch_plugins(self, _source_edit.text)
 	_manifest_warning = PluginRegistry.last_load_warning
+	_apply_current_sort()
 	for i in range(_all_plugins.size()):
-		var entry: PluginEntry = _all_plugins[i]
-		var status: String = _get_install_status(entry)
-		var versionWarning: String = entry.get_version_warning()
-		var templateWarning: String = entry.get_template_version_warning(_template_version)
-		var downloadWarning: String = entry.get_download_warning()
-		if not versionWarning.is_empty():
-			status += "，版本更新"
-		if not templateWarning.is_empty():
-			status += "，模板版本不足"
-		if not downloadWarning.is_empty() and not _is_installed(entry):
-			status += "，不可安装"
-		var displayText: String = "%s  [%s]" % [entry.displayName, status]
-		_plugin_list.add_item(displayText)
-		if _is_installed(entry):
-			_plugin_list.set_item_custom_fg_color(i, Color(0.4, 0.8, 0.4))
-		if not versionWarning.is_empty() or not templateWarning.is_empty() or (not downloadWarning.is_empty() and not _is_installed(entry)):
-			_plugin_list.set_item_custom_fg_color(i, Color(0.95, 0.7, 0.25))
+		_append_plugin_item(i)
 	if _plugin_list.item_count > 0:
 		_plugin_list.select(0)
 		_on_plugin_selected(0)
@@ -233,6 +184,66 @@ func _refresh_plugin_list() -> void:
 	_refresh_button.disabled = false
 	_source_edit.editable = true
 	_is_refreshing = false
+
+
+func _on_sort_selected(index: int) -> void:
+	_sort_mode = index
+	_apply_current_sort()
+	_rebuild_plugin_items()
+
+
+## 就地按当前排序模式排列 _all_plugins：首字按名称自然序，时间按更新日期新到旧。
+func _apply_current_sort() -> void:
+	if _sort_mode == SortMode.SORT_BY_NAME:
+		_all_plugins.sort_custom(func(a: PluginEntry, b: PluginEntry) -> bool:
+			return a.displayName.naturalnocasecmp_to(b.displayName) < 0
+		)
+	else:
+		# ISO 日期字符串可直接按字典序比较
+		_all_plugins.sort_custom(func(a: PluginEntry, b: PluginEntry) -> bool:
+			var byDate: int = b.updatedAt.naturalnocasecmp_to(a.updatedAt)
+			if byDate != 0:
+				return byDate < 0
+			return a.displayName.naturalnocasecmp_to(b.displayName) < 0
+		)
+
+
+## 向列表追加第 index 个插件条目（状态后缀与颜色标记）。
+func _append_plugin_item(index: int) -> void:
+	var entry: PluginEntry = _all_plugins[index]
+	var status: String = _get_install_status(entry)
+	var versionWarning: String = entry.get_version_warning()
+	var recommendation: String = entry.get_template_recommendation(_template_version)
+	var downloadWarning: String = entry.get_download_warning()
+	if not versionWarning.is_empty():
+		status += "，版本更新"
+	if not recommendation.is_empty():
+		status += "，建议升级模板"
+	if not downloadWarning.is_empty() and not _is_installed(entry):
+		status += "，不可安装"
+	_plugin_list.add_item("%s  [%s]" % [entry.displayName, status])
+	if _is_installed(entry):
+		_plugin_list.set_item_custom_fg_color(index, Color(0.4, 0.8, 0.4))
+	if not versionWarning.is_empty() or not recommendation.is_empty() or (not downloadWarning.is_empty() and not _is_installed(entry)):
+		_plugin_list.set_item_custom_fg_color(index, Color(0.95, 0.7, 0.25))
+
+
+## 清空并按当前排序重建全部列表条目，尽量保持原选中项。
+func _rebuild_plugin_items() -> void:
+	var selectedId: String = ""
+	var selected: PackedInt32Array = _plugin_list.get_selected_items()
+	if not selected.is_empty() and selected[0] < _all_plugins.size():
+		selectedId = _all_plugins[selected[0]].id
+	_plugin_list.clear()
+	for i in range(_all_plugins.size()):
+		_append_plugin_item(i)
+	if selectedId.is_empty():
+		return
+	for i in range(_all_plugins.size()):
+		if _all_plugins[i].id == selectedId:
+			_plugin_list.select(i)
+			_on_plugin_selected(i)
+			return
 
 
 func _on_refresh_pressed() -> void:
@@ -248,6 +259,14 @@ func _on_contribute_pressed() -> void:
 	_status_label.text = "已打开插件注册表 Pull Requests 页面。"
 
 
+## 打开详情中点击的主页链接（RichTextLabel 需手动处理 meta_clicked）。
+func _on_meta_clicked(meta: Variant) -> void:
+	var url: String = str(meta).strip_edges()
+	if not url.is_empty():
+		OS.shell_open(url)
+		_status_label.text = "已在系统浏览器打开：%s" % url
+
+
 func _on_plugin_selected(index: int) -> void:
 	if index < 0 or index >= _all_plugins.size():
 		return
@@ -259,22 +278,27 @@ func _on_plugin_selected(index: int) -> void:
 
 	var status: String = _get_install_status(entry)
 	var desc: String = "[b]版本：[/b] %s\n" % entry.version
+	if not entry.updatedAt.is_empty():
+		desc += "[b]更新时间：[/b] %s\n" % entry.updatedAt
 	desc += "[b]当前 Template 版本：[/b] %s\n" % (_template_version if not _template_version.is_empty() else "未知")
-	if not entry.minTemplateVersion.is_empty():
-		desc += "[b]最低 Template 版本：[/b] %s\n" % entry.minTemplateVersion
+	if not entry.recommendedTemplateVersion.is_empty():
+		desc += "[b]推荐 Template 版本：[/b] %s\n" % entry.recommendedTemplateVersion
 	var installedVersion: String = entry.get_installed_version()
 	if not installedVersion.is_empty():
 		desc += "[b]已安装版本：[/b] %s\n" % installedVersion
 	desc += "[b]作者：[/b] %s\n\n" % entry.author
 	desc += "[b]状态：[/b] %s\n\n" % status
 	desc += "[b]描述：[/b]\n%s\n\n" % entry.description
+	var changelogText: String = _render_changelog(entry)
+	if not changelogText.is_empty():
+		desc += "%s\n" % changelogText
 	desc += "[b]主页：[/b] [url]%s[/url]" % entry.homepage
 	var versionWarning: String = entry.get_version_warning()
 	if not versionWarning.is_empty():
 		desc += "\n\n[color=#e0a040][b]版本状态：[/b] %s[/color]" % versionWarning
-	var templateWarning: String = entry.get_template_version_warning(_template_version)
-	if not templateWarning.is_empty():
-		desc += "\n\n[color=#e0a040][b]模板版本警告：[/b] %s[/color]" % templateWarning
+	var recommendation: String = entry.get_template_recommendation(_template_version)
+	if not recommendation.is_empty():
+		desc += "\n\n[color=#e0a040][b]模板建议：[/b] %s[/color]" % recommendation
 	var downloadWarning: String = entry.get_download_warning()
 	if not downloadWarning.is_empty() and not _is_installed(entry):
 		desc += "\n\n[color=#e05050][b]安装不可用：[/b] %s[/color]" % downloadWarning
@@ -284,6 +308,31 @@ func _on_plugin_selected(index: int) -> void:
 	_status_label.text = _manifest_warning
 
 	_update_action_button(entry)
+
+
+## 渲染更新日志为 BBCode；清单未提供时返回空串。
+func _render_changelog(entry: PluginEntry) -> String:
+	if entry.changelog.is_empty():
+		return ""
+	var text: String = "[b]更新日志：[/b]\n"
+	for i in range(entry.changelog.size()):
+		var release: Dictionary = entry.changelog[i]
+		var heading: String = str(release.get("version", ""))
+		var date: String = str(release.get("date", ""))
+		if not heading.is_empty():
+			heading = "v" + heading.lstrip("vV")
+		if not date.is_empty():
+			if heading.is_empty():
+				heading = date
+			else:
+				heading += "（%s）" % date
+		text += "[b]%s[/b]\n" % heading
+		var notes: PackedStringArray = release.get("notes", PackedStringArray())
+		for note: String in notes:
+			text += "- %s\n" % note
+		if i < entry.changelog.size() - 1:
+			text += "\n"
+	return text
 
 
 func _update_action_button(entry: PluginEntry) -> void:
@@ -329,11 +378,11 @@ func _on_action_pressed() -> void:
 		if downloadUrl.is_empty():
 			_status_label.text = "安装不可用：请选择有效的下载源"
 			return
-		var templateWarning: String = entry.get_template_version_warning(_template_version)
-		if not templateWarning.is_empty():
-			_confirm_install(entry, downloadUrl, templateWarning)
-		else:
-			_start_install(entry, downloadUrl)
+		# 推荐版本仅提示，不拦截安装
+		var recommendation: String = entry.get_template_recommendation(_template_version)
+		if not recommendation.is_empty():
+			_status_label.text = "注意：" + recommendation
+		_start_install(entry, downloadUrl)
 
 
 func _populate_download_sources(entry: PluginEntry) -> void:
@@ -357,25 +406,6 @@ func _get_selected_download_url(entry: PluginEntry) -> String:
 	if sourceId < 0 or sourceId >= sources.size():
 		return ""
 	return str(sources[sourceId].get("url", "")).strip_edges()
-
-
-func _confirm_install(entry: PluginEntry, downloadUrl: String, templateWarning: String) -> void:
-	var dialog: ConfirmationDialog = ConfirmationDialog.new()
-	dialog.unresizable = false
-	dialog.title = "模板版本警告"
-	dialog.dialog_text = "插件 %s 需要更高版本的 Template。\n\n%s\n\n仍要继续下载并安装吗？" % [entry.displayName, templateWarning]
-	dialog.ok_button_text = "继续安装"
-	dialog.cancel_button_text = "取消"
-	add_child(dialog)
-	dialog.confirmed.connect(func():
-		dialog.queue_free()
-		_start_install(entry, downloadUrl)
-	)
-	dialog.canceled.connect(func():
-		dialog.queue_free()
-		_status_label.text = "已取消安装。"
-	)
-	dialog.popup_centered(Vector2i(460, 220))
 
 
 func _confirm_uninstall(entry: PluginEntry) -> void:
@@ -434,7 +464,7 @@ func _on_download_complete(success: bool, message: String) -> void:
 		var selected: PackedInt32Array = _plugin_list.get_selected_items()
 		if not selected.is_empty():
 			var entry: PluginEntry = _all_plugins[selected[0]]
-			var enableOk: bool = await _enable_plugin(entry)
+			var enableOk: bool = await PluginInstallerClass.enablePlugin(entry, self)
 			if enableOk:
 				_status_label.text = "插件已安装并在当前编辑器中启用。"
 			else:
@@ -474,83 +504,6 @@ func _on_download_cancelled() -> void:
 		_update_action_button(_all_plugins[selected[0]])
 
 
-## 在 project.godot 中记录并在当前编辑器中启用插件。
-func _enable_plugin(entry: PluginEntry) -> bool:
-	var pluginCfgPath: String = entry.destPath + "/plugin.cfg"
-	if not FileAccess.file_exists(pluginCfgPath):
-		push_warning("[PluginStore] 插件配置文件不存在：%s" % pluginCfgPath)
-		return false
-
-	var cfg: ConfigFile = ConfigFile.new()
-	var cfgErr: int = cfg.load(pluginCfgPath)
-	if cfgErr != OK:
-		push_warning("[PluginStore] 无法读取插件配置：%s" % pluginCfgPath)
-		return false
-
-	var pluginName: String = str(cfg.get_value("plugin", "name", ""))
-	if pluginName.is_empty():
-		push_warning("[PluginStore] 插件配置中未找到 name 字段")
-		return false
-
-	var projPath: String = "res://project.godot"
-	var projCfg: ConfigFile = ConfigFile.new()
-	var projErr: int = projCfg.load(projPath)
-	if projErr != OK:
-		push_warning("[PluginStore] 无法读取 project.godot")
-		return false
-
-	var enabled: PackedStringArray = projCfg.get_value("editor_plugins", "enabled", PackedStringArray())
-
-	var fullPath: String = pluginCfgPath
-	var alreadyEnabled: bool = false
-	for p: String in enabled:
-		if p == fullPath:
-			alreadyEnabled = true
-			break
-
-	if not alreadyEnabled:
-		enabled.append(fullPath)
-		projCfg.set_value("editor_plugins", "enabled", enabled)
-		var saveErr: Error = projCfg.save(projPath)
-		if saveErr != OK:
-			push_warning("[PluginStore] 无法保存 project.godot（错误码：%d）" % saveErr)
-			return false
-		print("[PluginStore] 已写入插件启用记录：%s" % pluginName)
-	else:
-		print("[PluginStore] 插件已存在启用记录：%s" % pluginName)
-	ProjectSettings.set_setting("editor_plugins/enabled", enabled)
-
-	var scanOk: bool = await _scan_filesystem_and_wait()
-	if not scanOk:
-		push_warning("[PluginStore] 文件系统扫描未完成，暂不启用插件：%s" % pluginName)
-		return false
-
-	if not EditorInterface.is_plugin_enabled(fullPath):
-		EditorInterface.set_plugin_enabled(fullPath, true)
-		await get_tree().process_frame
-		await get_tree().process_frame
-
-	var runtimeEnabled: bool = EditorInterface.is_plugin_enabled(fullPath)
-	if not runtimeEnabled:
-		push_warning("[PluginStore] 无法在当前编辑器启用插件：%s" % pluginName)
-		return false
-
-	print("[PluginStore] 已在当前编辑器启用插件：%s" % pluginName)
-	return true
-
-
-## 等待新插件文件完成导入，避免在扫描期间调用插件管理器。
-func _scan_filesystem_and_wait() -> bool:
-	var filesystem: EditorFileSystem = EditorInterface.get_resource_filesystem()
-	filesystem.scan()
-	await get_tree().process_frame
-	for _i: int in range(120):
-		if not filesystem.is_scanning():
-			return true
-		await get_tree().process_frame
-	return false
-
-
 # ===================== 卸载 =====================
 
 func _start_uninstall(entry: PluginEntry) -> void:
@@ -562,7 +515,7 @@ func _start_uninstall(entry: PluginEntry) -> void:
 	_status_label.text = "正在停用插件..."
 
 	# 1. 先让 Godot 卸载插件实例，不能在插件仍运行时删除它的脚本。
-	var disableOk: bool = await _disable_plugin_before_removal(entry)
+	var disableOk: bool = await PluginInstallerClass.disablePluginBeforeRemoval(entry, self)
 	if not disableOk:
 		_is_busy = false
 		_progress_bar.visible = false
@@ -571,7 +524,7 @@ func _start_uninstall(entry: PluginEntry) -> void:
 		return
 
 	# 2. 清理 project.godot 中可能残留的启用记录。
-	var projectOk: bool = _disable_plugin_in_project(entry)
+	var projectOk: bool = PluginInstallerClass.disablePluginInProject(entry)
 	if not projectOk:
 		_is_busy = false
 		_progress_bar.visible = false
@@ -582,7 +535,7 @@ func _start_uninstall(entry: PluginEntry) -> void:
 	# 3. 将目录原子移出项目，避免编辑器扫描到逐个消失的脚本文件。
 	_progress_bar.value = 30
 	_status_label.text = "正在移出插件文件..."
-	var quarantineOk: bool = _quarantine_plugin_dir(entry)
+	var quarantineOk: bool = PluginInstallerClass.quarantinePluginDir(entry)
 
 	_progress_bar.value = 100
 	_is_busy = false
@@ -597,107 +550,10 @@ func _start_uninstall(entry: PluginEntry) -> void:
 		push_warning("[PluginStore] 无法移出插件目录：%s" % entry.destPath)
 
 
-## 通过 Godot 的插件管理器卸载已启用的插件，并等待其退出树。
-func _disable_plugin_before_removal(entry: PluginEntry) -> bool:
-	var pluginCfgPath: String = entry.destPath + "/plugin.cfg"
-	if not FileAccess.file_exists(pluginCfgPath):
-		return true
-
-	if not EditorInterface.is_plugin_enabled(pluginCfgPath):
-		return true
-
-	EditorInterface.set_plugin_enabled(pluginCfgPath, false)
-	for _i: int in range(120):
-		await get_tree().process_frame
-		if not EditorInterface.is_plugin_enabled(pluginCfgPath):
-			await get_tree().process_frame
-			if not EditorInterface.is_plugin_enabled(pluginCfgPath):
-				return true
-	push_warning("[PluginStore] 插件仍处于启用状态，取消删除：%s" % pluginCfgPath)
-	return false
-
-
-## 从 project.godot 中移除插件的启用记录。
-func _disable_plugin_in_project(entry: PluginEntry) -> bool:
-	var projPath: String = "res://project.godot"
-	var projCfg: ConfigFile = ConfigFile.new()
-	var projErr: int = projCfg.load(projPath)
-	if projErr != OK:
-		push_warning("[PluginStore] 无法读取 project.godot")
-		return false
-
-	var enabled: PackedStringArray = projCfg.get_value("editor_plugins", "enabled", PackedStringArray())
-	var newEnabled: PackedStringArray = PackedStringArray()
-
-	for p: String in enabled:
-		# 保留不匹配的插件路径
-		# 匹配条件：路径等于 destPath，或路径以 destPath + "/" 开头
-		if p != entry.destPath and not p.begins_with(entry.destPath + "/"):
-			newEnabled.append(p)
-
-	if newEnabled.size() != enabled.size():
-		projCfg.set_value("editor_plugins", "enabled", newEnabled)
-		var saveErr: Error = projCfg.save(projPath)
-		if saveErr != OK:
-			push_warning("[PluginStore] 无法保存 project.godot（错误码：%d）" % saveErr)
-			return false
-		print("[PluginStore] 已从 project.godot 移除插件启用记录：%s" % entry.id)
-	ProjectSettings.set_setting("editor_plugins/enabled", newEnabled)
-	return true
-
-
-## 将插件目录移出 res://，把真正的清理延后到编辑器重启后。
-func _quarantine_plugin_dir(entry: PluginEntry) -> bool:
-	var sourcePath: String = ProjectSettings.globalize_path(entry.destPath)
-	if not DirAccess.dir_exists_absolute(sourcePath):
-		return true
-
-	var trashRoot: String = ProjectSettings.globalize_path("user://plugin_store_trash")
-	var makeDirErr: Error = DirAccess.make_dir_recursive_absolute(trashRoot)
-	if makeDirErr != OK and not DirAccess.dir_exists_absolute(trashRoot):
-		push_warning("[PluginStore] 无法创建插件隔离目录（错误码：%d）" % makeDirErr)
-		return false
-
-	var trashName: String = "%s_%d" % [entry.id.replace("/", "_"), Time.get_ticks_msec()]
-	var targetPath: String = trashRoot.path_join(trashName)
-	var renameErr: Error = DirAccess.rename_absolute(sourcePath, targetPath)
-	if renameErr != OK:
-		push_warning("[PluginStore] 无法将插件移出项目（错误码：%d）" % renameErr)
-		return false
-
-	print("[PluginStore] 插件文件已移入隔离目录：%s" % targetPath)
-	return true
-
-
-## 只更新当前条目，避免卸载完成后再次扫描项目或请求远程清单。
-func _refresh_plugin_item(entry: PluginEntry) -> void:
-	var itemIndex: int = -1
-	for i: int in range(_all_plugins.size()):
-		if _all_plugins[i].id == entry.id:
-			itemIndex = i
-			break
-	if itemIndex < 0:
-		return
-
-	var status: String = _get_install_status(entry)
-	var versionWarning: String = entry.get_version_warning()
-	var templateWarning: String = entry.get_template_version_warning(_template_version)
-	var downloadWarning: String = entry.get_download_warning()
-	if not versionWarning.is_empty():
-		status += "，版本更新"
-	if not templateWarning.is_empty():
-		status += "，模板版本不足"
-	if not downloadWarning.is_empty() and not _is_installed(entry):
-		status += "，不可安装"
-	var displayText: String = "%s  [%s]" % [entry.displayName, status]
-	_plugin_list.set_item_text(itemIndex, displayText)
-	_plugin_list.set_item_custom_fg_color(itemIndex, Color(1, 1, 1))
-	if _is_installed(entry):
-		_plugin_list.set_item_custom_fg_color(itemIndex, Color(0.4, 0.8, 0.4))
-	if not versionWarning.is_empty() or not templateWarning.is_empty() or (not downloadWarning.is_empty() and not _is_installed(entry)):
-		_plugin_list.set_item_custom_fg_color(itemIndex, Color(0.95, 0.7, 0.25))
-	_plugin_list.select(itemIndex)
-	_on_plugin_selected(itemIndex)
+## 只重绘列表条目，避免卸载完成后再次扫描项目或请求远程清单。
+func _refresh_plugin_item(_entry: PluginEntry) -> void:
+	_apply_current_sort()
+	_rebuild_plugin_items()
 
 
 func _is_installed(entry: PluginEntry) -> bool:

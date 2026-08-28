@@ -28,13 +28,16 @@ func _collect_game_state() -> Dictionary:
 			state = lm.get_save_data()
 	else:
 		state = {"level_progress": ProgressStore.to_dict()}
+	state["achievements"] = AchievementManager.to_dict()
 	var progress: Dictionary = state.get("level_progress", {})
-	if not progress.is_empty():
+	if not progress.is_empty() or not state["achievements"].is_empty():
 		state["cloud_save_time"] = Time.get_datetime_string_from_system()
 	return state
 
 
 func _apply_game_state(data: Dictionary) -> void:
+	if data.has("achievements") and data["achievements"] is Dictionary:
+		AchievementManager.from_dict(data["achievements"])
 	if Engine.get_main_loop().root.has_node("/root/LevelManager"):
 		var lm: Node = Engine.get_main_loop().root.get_node("/root/LevelManager")
 		if lm.has_method("apply_save_data"):

@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://dcp78ndvx6dxd"
 path.s3tc="res://.godot/imported/GuidanceBoxTriggered.png-a4c4460ed1d34608db8a0a2ad5157387.s3tc.ctex"
-path.etc2="res://.godot/imported/GuidanceBoxTriggered.png-a4c4460ed1d34608db8a0a2ad5157387.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://#Template/[Textures]/GuidanceBoxTriggered.png"
-dest_files=["res://.godot/imported/GuidanceBoxTriggered.png-a4c4460ed1d34608db8a0a2ad5157387.s3tc.ctex", "res://.godot/imported/GuidanceBoxTriggered.png-a4c4460ed1d34608db8a0a2ad5157387.etc2.ctex"]
+dest_files=["res://.godot/imported/GuidanceBoxTriggered.png-a4c4460ed1d34608db8a0a2ad5157387.s3tc.ctex"]
 
 [params]
 

@@ -658,6 +658,7 @@ func _on_watch_ad_requested() -> void:
 func get_save_data() -> Dictionary:
 	return {
 		"level_progress": ProgressStore.to_dict(),
+		"achievements": AchievementManager.to_dict(),
 	}
 
 
@@ -668,4 +669,6 @@ func apply_save_data(data: Dictionary) -> void:
 		ProgressStore.from_dict(data["level_progress"])
 	else:
 		print("[LevelManager] no level_progress key in data")
+	if data.has("achievements") and data["achievements"] is Dictionary:
+		AchievementManager.from_dict(data["achievements"])
 	_update_display()

@@ -118,10 +118,10 @@ func _hide_revive_ui_silent() -> void:
 
 func _save_progress() -> void:
 	var p = Player.instance
-	if not p or not p.level_data:
-		print("[CustomGameUI] save skipped: no player or level_data")
+	if not p or not p.levelData:
+		print("[CustomGameUI] save skipped: no player or levelData")
 		return
-	var save_id: int = p.level_data.saveID
+	var save_id: int = p.levelData.saveID
 	print("[CustomGameUI] saving progress: save_id=%d crown=%d percent=%d diamond=%d" % [save_id, LevelManager.crown, LevelManager.percent, LevelManager.gem])
 	PopupToast.show("正在保存游戏进度...", 2.0)
 	ProgressStore.update_level(str(save_id), LevelManager.crown, LevelManager.percent, LevelManager.gem)
@@ -137,8 +137,8 @@ func _update_ui_data() -> void:
 	if not p: return
 	
 	# 1. 顶部栏信息
-	if p.level_data:
-		level_label.text = p.level_data.levelTitle
+	if p.levelData:
+		level_label.text = p.levelData.levelTitle
 	
 	_update_user_display()
 
@@ -148,7 +148,7 @@ func _update_ui_data() -> void:
 	
 	var music_player = p.get_node_or_null("MusicPlayer") as AudioStreamPlayer
 	if music_player and music_player.stream:
-		var total_sec = p.level_data.levelTotalTime if p.level_data.useCustomLevelTime else music_player.stream.get_length()
+		var total_sec = p.levelData.levelTotalTime if p.levelData.useCustomLevelTime else music_player.stream.get_length()
 		var current_sec = music_player.get_playback_position()
 		progress_detail.text = "%.1fs / %.1fs" % [current_sec, total_sec]
 	
@@ -190,8 +190,8 @@ func _apply_theme_recursive(node: Node, bg: Color, text: Color) -> void:
 		_apply_theme_recursive(child, bg, text)
 
 func _get_background_color() -> Color:
-	if Player.instance and Player.instance.level_data:
-		var colors = Player.instance.level_data.colors
+	if Player.instance and Player.instance.levelData:
+		var colors = Player.instance.levelData.colors
 		if colors.size() > 0: return colors[0].color
 	var cam = get_viewport().get_camera_3d()
 	if cam and cam.environment:
@@ -212,7 +212,7 @@ func _update_revive_progress() -> void:
 		if p:
 			var music_player = p.get_node_or_null("MusicPlayer") as AudioStreamPlayer
 			if music_player and music_player.stream:
-				var total_sec: float = p.level_data.levelTotalTime if p.level_data.useCustomLevelTime else music_player.stream.get_length()
+				var total_sec: float = p.levelData.levelTotalTime if p.levelData.useCustomLevelTime else music_player.stream.get_length()
 				var current_sec: float = music_player.get_playback_position()
 				if total_sec > 0:
 					percent = int((current_sec / total_sec) * 100)

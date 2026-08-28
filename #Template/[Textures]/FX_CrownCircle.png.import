@@ -4,16 +4,15 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://mj12gw3q1d3w"
 path.s3tc="res://.godot/imported/FX_CrownCircle.png-8fdec040cccd4f83081c0220ef756048.s3tc.ctex"
-path.etc2="res://.godot/imported/FX_CrownCircle.png-8fdec040cccd4f83081c0220ef756048.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc", "etc2_astc"],
+"imported_formats": ["s3tc_bptc"],
 "vram_texture": true
 }
 
 [deps]
 
 source_file="res://#Template/[Textures]/FX_CrownCircle.png"
-dest_files=["res://.godot/imported/FX_CrownCircle.png-8fdec040cccd4f83081c0220ef756048.s3tc.ctex", "res://.godot/imported/FX_CrownCircle.png-8fdec040cccd4f83081c0220ef756048.etc2.ctex"]
+dest_files=["res://.godot/imported/FX_CrownCircle.png-8fdec040cccd4f83081c0220ef756048.s3tc.ctex"]
 
 [params]
 

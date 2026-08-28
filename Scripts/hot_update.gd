@@ -14,6 +14,9 @@ var loaded_count: int = 0
 
 func _ready() -> void:
 	loaded_count = _loadLocalPacks()
+	if DisplayServer.get_name() == "headless" or OS.get_cmdline_args().has("--script"):
+		update_finished.emit(loaded_count)
+		return
 	_fetchRemote()
 
 

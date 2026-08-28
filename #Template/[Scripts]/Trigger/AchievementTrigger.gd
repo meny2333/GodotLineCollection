@@ -8,3 +8,5 @@ func trigger(body: Node3D) -> bool:
 		var manager: GDScript = GlobalClassLookup.findScript("AchievementManager")
 		if manager:
 			manager.AddAchievement(achievementKey)
+		return true
+	return false

@@ -20,6 +20,11 @@ func _init() -> void:
 	if hot == null:
 		push_error("HotUpdate failed to load")
 		failed += 1
+	GraphicsQuality.setLevel(0)
+	if GraphicsQuality.getQualityLabel() != "低":
+		push_error("GraphicsQuality label mismatch")
+		failed += 1
+	GraphicsQuality.setLevel(2)
 	if failed > 0:
 		push_error("[check_boot] FAILED %d" % failed)
 		quit(1)

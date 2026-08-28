@@ -77,6 +77,8 @@ func _ready() -> void:
 	_apply_circle_avatar(avatar_rect)
 	_create_import_dialog()
 	_apply_display_settings()
+	GraphicsQuality.loadSettings()
+	GraphicsQuality.applyToScene(get_viewport(), get_tree(), null)
 	PCKDownloader.ensure_instance()
 	_fetch_remote_urls()
 	_ad_system.prefetch_ads()

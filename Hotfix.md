@@ -15,6 +15,8 @@ NewShinnline 用 `override.cfg` 的 `hot_update/manifest_urls` 覆盖默认地�
 
 启动顺序：`Scenes/UpdateCheck.tscn` → GAS 登录 → 主界面。关卡选单返回主界面，不要回检查更新。
 
+Godot 编辑器/导出读的是 `project.godot` 的 `application/run/main_scene`。`override.cfg` **不会**覆盖这项，必须写进 `project.godot`。`override.cfg` 只适合 autoload 和 `hot_update/manifest_urls`。
+
 1. Autoload `HotUpdate` 只加载本地包（`res://patches`、`<exe>/patches`、`user://patches`）。
 2. `UpdateCheck.tscn` 调 `check_updates()` 拉 manifest。有包则显示更新/稍后（`force` 时稍后变退出）。
 3. 下载写入 `user://patches/`，**当场不** `load_resource_pack`。下次启动步骤 1 才加载。

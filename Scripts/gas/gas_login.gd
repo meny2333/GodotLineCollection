@@ -175,4 +175,11 @@ func _navigate_back() -> void:
 	var tween := create_tween()
 	tween.tween_property(self, "modulate", Color.TRANSPARENT, 0.3)
 	await tween.finished
-	get_tree().change_scene_to_file("res://Scenes/LevelManager.tscn")
+	get_tree().change_scene_to_file(_home_scene())
+
+
+func _home_scene() -> String:
+	var override_scene := str(ProjectSettings.get_setting("application/config/home_scene", ""))
+	if not override_scene.is_empty():
+		return override_scene
+	return "res://Scenes/LevelManager.tscn"

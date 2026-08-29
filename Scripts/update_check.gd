@@ -27,7 +27,6 @@ func _ready() -> void:
 	_update_btn.visible = true
 	_skip_btn.visible = true
 	_skip_btn.text = "退出" if HotUpdate.force_update else "稍后"
-	_skip_btn.disabled = false
 
 
 func _on_update() -> void:

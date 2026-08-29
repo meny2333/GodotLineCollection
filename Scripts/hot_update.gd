@@ -274,22 +274,20 @@ func _download(url: String, dest: String) -> bool:
 	if err != OK:
 		http.queue_free()
 		return false
-	var done := false
-	var code := 0
-	var body := PackedByteArray()
+	var state := {"done": false, "code": 0, "body": PackedByteArray()}
 	http.request_completed.connect(func(_r: int, c: int, _h: PackedStringArray, b: PackedByteArray):
-		code = c
-		body = b
-		done = true
+		state.code = c
+		state.body = b
+		state.done = true
 	)
-	while not done:
+	while not state.done:
 		if not is_instance_valid(http):
 			return false
 		var total := http.get_body_size()
 		var got := http.get_downloaded_bytes()
 		var percent := 0.0
 		if total > 0:
-			percent = clampf(float(got) / float(total) * 100.0, 0.0, 100.0)
+			percent = clampf(float(got) / float(total) * 100.0, 0.0, 99.0)
 		elif got > 0:
 			percent = 50.0
 		if _progress:
@@ -297,10 +295,12 @@ func _download(url: String, dest: String) -> bool:
 		download_progress.emit(dest.get_file(), percent)
 		await get_tree().process_frame
 	http.queue_free()
-	if code != 200 or body.is_empty():
+	if int(state.code) != 200 or PackedByteArray(state.body).is_empty():
 		return false
 	var file := FileAccess.open(dest, FileAccess.WRITE)
 	if file == null:
 		return false
-	file.store_buffer(body)
+	file.store_buffer(state.body)
+	if _progress:
+		_progress.value = 100
 	return true

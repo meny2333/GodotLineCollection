@@ -33,7 +33,7 @@ GodotLineCollection 是一个 Godot 4.6 关卡合集 / 启动器：通过 PCK �
 - `LongSceneManager` → addon `long_scene_manager`
 - `ImGuiRoot` / `ImGuiDebug` → imgui-godot 调试 UI
 - `PopupToast` → `Scripts/PopupToast.gd`
-- `HotUpdate` → `Scripts/hot_update.gd`（启动时加载 `res://patches`、可执行目录 `patches/`、`user://patches`，再按 manifest 拉远程 PCK）
+- `HotUpdate` → `Scripts/hot_update.gd`（见 `Hotfix.md`）
 - `MCPRuntimeProbe` → `addons/godot_mcp/runtime/mcp_runtime_probe.gd`
 
 **不是 autoload、而是纯静态类**（`class_name X extends RefCounted`，按类名静态调用，不要 `get_node`）：
